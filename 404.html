@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><title>Redirigiendo...</title></head>
+<body>
+<script>
+  // GitHub Pages sirve este archivo cuando la URL no coincide con ningún
+  // archivo real (ej: catalogo.jpbalanceados.com/petshopjuan). Tomamos el
+  // slug de la ruta y redirigimos a index.html con ?cliente=slug, que es
+  // lo que catalogo-publico.html (index.html) sabe leer.
+  var slug = location.pathname.replace(/^\/+|\/+$/g, '');
+  location.replace('/?cliente=' + encodeURIComponent(slug));
+</script>
+</body>
+</html>
