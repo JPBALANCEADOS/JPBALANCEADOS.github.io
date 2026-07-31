@@ -136,7 +136,6 @@ header.marca{background:var(--marca);color:#fff;}
 
 /* ── Ficha de producto ── */
 .ficha-hero{position:relative;height:min(280px,42vh);border-radius:var(--radio);background:var(--hueso);overflow:hidden;margin-bottom:10px;}
-.ficha-hero-fondo{position:absolute;inset:-14px;width:calc(100% + 28px)!important;height:calc(100% + 28px)!important;object-fit:cover!important;filter:blur(22px) brightness(.92);transform:scale(1.1);z-index:0;}
 #fichaHeroImg{position:relative;width:100%;height:100%;z-index:1;}
 .ficha-hero-img{position:relative;z-index:1;width:100%;height:100%;object-fit:contain;}
 .ficha-hero .sin-imagen{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:56px;}
@@ -228,7 +227,6 @@ let productosActuales = [];
 let listaConsulta = new Map(); // producto_id -> producto
 let filtroTexto = '';
 let filtroEspecie = '';
-let filtroCategoria = '';
 let filtroEtapa = '';
 let filtroSoloDestacados = false;
 let ordenActual = 'relevancia';
@@ -343,13 +341,6 @@ function especiesUnicas(){
   });
   return set;
 }
-function categoriasUnicas(){
-  const set = new Map();
-  CATALOGO.productos.forEach(function(p){
-    if(p.categoria_id) set.set(String(p.categoria_id), p.categoria_nombre || ('Categoría '+p.categoria_id));
-  });
-  return set;
-}
 function etapaDe(p){ return p.edad_etaria_canonica || p.ali_edad_etaria || ''; }
 function etapasUnicas(){
   const set = new Map();
@@ -369,26 +360,6 @@ function contarDestacados(){
   return CATALOGO.productos.filter(function(p){ return !!p.destacado; }).length;
 }
 
-// Emoji por especie/etapa — heurística por nombre, para no depender de
-// que el ERP mande un ícono. Si el texto no matchea nada conocido, cae a
-// un emoji genérico en vez de romper o dejar el chip sin ícono.
-function emojiEspecie(nombre){
-  const n = String(nombre||'').toLowerCase();
-  if(n.indexOf('perro')!==-1 || n.indexOf('canin')!==-1) return '🐕';
-  if(n.indexOf('gato')!==-1 || n.indexOf('felin')!==-1) return '🐱';
-  if(n.indexOf('ave')!==-1 || n.indexOf('pajar')!==-1) return '🐦';
-  if(n.indexOf('pez')!==-1 || n.indexOf('acuar')!==-1) return '🐟';
-  if(n.indexOf('roedor')!==-1 || n.indexOf('conejo')!==-1 || n.indexOf('hamster')!==-1) return '🐹';
-  return '🐾';
-}
-function emojiEtapa(nombre){
-  const n = String(nombre||'').toLowerCase();
-  if(n.indexOf('cachorro')!==-1 || n.indexOf('kitten')!==-1 || n.indexOf('junior')!==-1 || n.indexOf('puppy')!==-1) return '🍼';
-  if(n.indexOf('senior')!==-1 || n.indexOf('mayor')!==-1) return '⭐';
-  if(n.indexOf('adulto')!==-1) return '🔵';
-  return '🔹';
-}
-
 function renderPagina(){
   const negocio = CATALOGO.negocio || {};
   const colorMarca = negocio.color_marca || '#2D6A4F';
@@ -397,23 +368,18 @@ function renderPagina(){
   document.title = tituloPagina;
 
   const especies = especiesUnicas();
-  const categorias = categoriasUnicas();
   const etapas = etapasUnicas();
 
   const chipsEspecie = ['<div class="chip activo" data-tipo="especie" data-val="">Todas</div>']
     .concat(Array.from(especies.entries()).map(function(par){
-      return '<div class="chip" data-tipo="especie" data-val="'+escaparHTML(par[0])+'">'+emojiEspecie(par[1])+' '+escaparHTML(par[1])+' <span class="chip-count">('+contarPor('especie_id',par[0])+')</span></div>';
+      return '<div class="chip" data-tipo="especie" data-val="'+escaparHTML(par[0])+'">'+escaparHTML(par[1])+' <span class="chip-count">('+contarPor('especie_id',par[0])+')</span></div>';
     })).join('');
 
-  const chipsEtapa = etapas.size ? ['<div class="chip activo" data-tipo="etapa" data-val="">Todas las etapas</div>']
+  const chipsEtapa = (etapas.size ? ['<div class="chip activo" data-tipo="etapa" data-val="">Todas las etapas</div>']
     .concat(Array.from(etapas.keys()).map(function(e){
-      return '<div class="chip" data-tipo="etapa" data-val="'+escaparHTML(e)+'">'+emojiEtapa(e)+' '+escaparHTML(e)+' <span class="chip-count">('+contarEtapa(e)+')</span></div>';
-    })).join('') : '';
-
-  const chipsCategoria = ['<div class="chip activo" data-tipo="categoria" data-val="">Todas</div>']
-    .concat(Array.from(categorias.entries()).map(function(par){
-      return '<div class="chip" data-tipo="categoria" data-val="'+escaparHTML(par[0])+'">'+escaparHTML(par[1])+' <span class="chip-count">('+contarPor('categoria_id',par[0])+')</span></div>';
-    })).join('') + '<div class="chip chip-destacado" id="chipDestacadosPublico">★ Destacados <span class="chip-count">('+contarDestacados()+')</span></div>';
+      return '<div class="chip" data-tipo="etapa" data-val="'+escaparHTML(e)+'">'+escaparHTML(e)+' <span class="chip-count">('+contarEtapa(e)+')</span></div>';
+    })).join('') : '')+
+    '<div class="chip chip-destacado" id="chipDestacadosPublico">★ Destacados <span class="chip-count">('+contarDestacados()+')</span></div>';
 
   document.getElementById('raiz').innerHTML =
     '<header class="marca">'+
@@ -441,8 +407,7 @@ function renderPagina(){
         '</select>'+
       '</div>'+
       '<div id="chipsEspecie" class="chips-fila">'+chipsEspecie+'</div>'+
-      (chipsEtapa ? '<div id="chipsEtapa" class="chips-fila">'+chipsEtapa+'</div>' : '')+
-      '<div id="chipsCategoria" class="chips-fila">'+chipsCategoria+'</div>'+
+      '<div id="chipsEtapa" class="chips-fila">'+chipsEtapa+'</div>'+
     '</div></div>'+
     '<main class="contenido">'+
       '<div id="resultadoInfo" class="resultado-info"></div>'+
@@ -495,16 +460,7 @@ function renderPagina(){
     this.querySelectorAll('.chip').forEach(function(c){ c.classList.toggle('activo', c===chip); });
     aplicarFiltros();
   });
-  const chipsEtapaEl = document.getElementById('chipsEtapa');
-  if(chipsEtapaEl){
-    chipsEtapaEl.addEventListener('click', function(e){
-      const chip = e.target.closest('.chip'); if(!chip) return;
-      filtroEtapa = chip.dataset.val;
-      this.querySelectorAll('.chip').forEach(function(c){ c.classList.toggle('activo', c===chip); });
-      aplicarFiltros();
-    });
-  }
-  document.getElementById('chipsCategoria').addEventListener('click', function(e){
+  document.getElementById('chipsEtapa').addEventListener('click', function(e){
     const chip = e.target.closest('.chip'); if(!chip) return;
     if(chip.id === 'chipDestacadosPublico'){
       filtroSoloDestacados = !filtroSoloDestacados;
@@ -512,7 +468,7 @@ function renderPagina(){
       aplicarFiltros();
       return;
     }
-    filtroCategoria = chip.dataset.val;
+    filtroEtapa = chip.dataset.val;
     this.querySelectorAll('.chip').forEach(function(c){ if(c.id !== 'chipDestacadosPublico') c.classList.toggle('activo', c===chip); });
     aplicarFiltros();
   });
@@ -544,7 +500,6 @@ function renderPagina(){
 function aplicarFiltros(){
   let lista = CATALOGO.productos.slice();
   if(filtroEspecie) lista = lista.filter(function(p){ return String(p.especie_id||'')===filtroEspecie; });
-  if(filtroCategoria) lista = lista.filter(function(p){ return String(p.categoria_id||'')===filtroCategoria; });
   if(filtroEtapa) lista = lista.filter(function(p){ return etapaDe(p)===filtroEtapa; });
   if(filtroSoloDestacados) lista = lista.filter(function(p){ return !!p.destacado; });
   if(filtroTexto){
@@ -568,7 +523,7 @@ function aplicarFiltros(){
   }
 
   productosActuales = lista;
-  const hayFiltrosActivos = !!(filtroTexto || filtroEspecie || filtroCategoria || filtroEtapa || filtroSoloDestacados);
+  const hayFiltrosActivos = !!(filtroTexto || filtroEspecie || filtroEtapa || filtroSoloDestacados);
   document.getElementById('resultadoInfo').innerHTML =
     '<span>'+lista.length+(lista.length===1?' producto encontrado':' productos encontrados')+'</span>'+
     (hayFiltrosActivos ? '<button class="link-limpiar" onclick="limpiarTodosLosFiltros()">Limpiar filtros</button>' : '');
@@ -578,14 +533,10 @@ function aplicarFiltros(){
 function precioEfectivo(p){ return (p.oferta && p.precio_oferta) ? p.precio_oferta : p.precio; }
 
 function limpiarTodosLosFiltros(){
-  filtroTexto=''; filtroEspecie=''; filtroCategoria=''; filtroEtapa=''; filtroSoloDestacados=false;
+  filtroTexto=''; filtroEspecie=''; filtroEtapa=''; filtroSoloDestacados=false;
   document.getElementById('buscador').value='';
   document.getElementById('btnLimpiarBuscador').classList.remove('visible');
   document.querySelectorAll('#chipsEspecie .chip, #chipsEtapa .chip').forEach(function(c){ c.classList.toggle('activo', c.dataset.val===''); });
-  document.querySelectorAll('#chipsCategoria .chip').forEach(function(c){
-    if(c.id === 'chipDestacadosPublico') c.classList.remove('activo');
-    else c.classList.toggle('activo', c.dataset.val==='');
-  });
   aplicarFiltros();
 }
 
@@ -606,8 +557,8 @@ function renderGrid(){
     }
     const etapa = etapaDe(p);
     const etiquetas = [
-      p.especie_nombre ? emojiEspecie(p.especie_nombre)+' '+p.especie_nombre : '',
-      etapa ? emojiEtapa(etapa)+' '+etapa : '',
+      p.especie_nombre || '',
+      etapa || '',
     ].filter(Boolean);
     return '<article class="card" data-id="'+escaparHTML(p.producto_id)+'">'+
       '<div class="card-badges">'+
@@ -667,11 +618,10 @@ function productosRelacionados(p){
 
 function htmlImagenHero(url, alt){
   if(!url) return '<span class="sin-imagen">🐾</span>';
-  return '<img class="ficha-hero-fondo" src="'+escaparHTML(url)+'" alt="" aria-hidden="true">'+
-    '<span class="spinner spinner-imagen"></span>'+
+  return '<span class="spinner spinner-imagen"></span>'+
     '<img class="ficha-hero-img" src="'+escaparHTML(url)+'" alt="'+escaparHTML(alt)+'" loading="lazy" '+
     'onload="var s=this.previousElementSibling;if(s&&s.classList.contains(\'spinner-imagen\'))s.remove();" '+
-    'onerror="var s=this.previousElementSibling;if(s&&s.classList.contains(\'spinner-imagen\'))s.remove();var f=this.parentElement.querySelector(\'.ficha-hero-fondo\');if(f)f.style.display=\'none\';this.replaceWith(Object.assign(document.createElement(\'span\'),{className:\'sin-imagen\',textContent:\'\ud83d\udc3e\'}))">';
+    'onerror="var s=this.previousElementSibling;if(s&&s.classList.contains(\'spinner-imagen\'))s.remove();this.replaceWith(Object.assign(document.createElement(\'span\'),{className:\'sin-imagen\',textContent:\'\ud83d\udc3e\'}))">';
 }
 
 function abrirFicha(id){
