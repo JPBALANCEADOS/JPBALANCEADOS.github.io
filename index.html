@@ -124,8 +124,23 @@ header.marca{background:var(--marca);color:#fff;}
 .hoja-cerrar{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;background:var(--hueso);font-size:16px;display:flex;align-items:center;justify-content:center;z-index:2;}
 
 /* ── Ficha de producto ── */
-.ficha-galeria{display:flex;gap:8px;overflow-x:auto;margin-bottom:12px;}
-.ficha-galeria img{width:96px;height:96px;object-fit:cover;border-radius:var(--radio-sm);flex:none;background:var(--hueso);}
+.ficha-hero{position:relative;height:min(280px,42vh);border-radius:var(--radio);background:var(--hueso);overflow:hidden;margin-bottom:10px;}
+.ficha-hero > div{width:100%;height:100%;}
+.ficha-hero img{width:100%;height:100%;object-fit:contain;}
+.ficha-hero .sin-imagen{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:56px;}
+.ficha-hero-badges{position:absolute;top:10px;left:10px;display:flex;flex-direction:column;gap:4px;}
+.ficha-miniaturas{display:flex;gap:8px;overflow-x:auto;margin-bottom:14px;scroll-snap-type:x proximity;}
+.ficha-miniaturas button{flex:none;width:52px;height:52px;padding:0;border-radius:var(--radio-sm);overflow:hidden;background:var(--hueso);border:2px solid transparent;scroll-snap-align:start;opacity:.65;transition:opacity .12s,border-color .12s;}
+.ficha-miniaturas button.activa{opacity:1;border-color:var(--marca);}
+.ficha-miniaturas img{width:100%;height:100%;object-fit:cover;}
+.scroll-desvanecido{position:relative;}
+.scroll-desvanecido .ficha-relacionados{-webkit-mask-image:linear-gradient(to right,transparent,#000 18px,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(to right,transparent,#000 18px,#000 calc(100% - 28px),transparent);}
+.ficha-relacionados{display:flex;gap:10px;overflow-x:auto;margin-top:8px;padding:2px 2px 6px;scroll-snap-type:x proximity;}
+.ficha-relacionado{flex:none;width:104px;text-align:left;border:1px solid var(--borde);border-radius:var(--radio-sm);padding:8px;margin:0;background:#fff;scroll-snap-align:start;transition:border-color .12s,box-shadow .12s;}
+.ficha-relacionado:hover{border-color:var(--marca);box-shadow:0 6px 14px rgba(26,29,27,.08);}
+.ficha-relacionado .card-img{height:72px;margin-bottom:6px;}
+.ficha-relacionado .card-marca,.ficha-relacionado .card-nombre{font-size:.62rem;overflow-wrap:anywhere;}
+.ficha-relacionado .card-nombre{margin-bottom:0;}
 .ficha-marca{font-size:.72rem;text-transform:uppercase;color:var(--carbon-60);overflow-wrap:anywhere;}
 .ficha-nombre{font-size:1.15rem;margin:2px 0 8px;overflow-wrap:anywhere;}
 .ficha-precio-fila{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
@@ -563,8 +578,21 @@ function abrirFicha(id){
     precioHtml = '<span class="ficha-precio">$'+monto(p.precio_oferta)+'</span><span class="ficha-precio tachado">$'+monto(p.precio)+'</span>';
   }
 
+  const badgesHero = (p.destacado ? '<span class="badge badge-destacado">★ Destacado</span>' : '') +
+    (p.oferta ? '<span class="badge badge-oferta">Oferta</span>' : '');
+
+  const heroHtml =
+    '<div class="ficha-hero">'+
+      (badgesHero ? '<div class="ficha-hero-badges">'+badgesHero+'</div>' : '')+
+      '<div id="fichaHeroImg">'+imagenConFallback(galeria[0], p.nombre)+'</div>'+
+    '</div>'+
+    (galeria.length > 1 ? '<div class="ficha-miniaturas">'+
+      galeria.map(function(url, i){
+        return '<button data-idx="'+i+'" data-url="'+escaparHTML(url)+'" class="'+(i===0?'activa':'')+'" aria-label="Ver imagen '+(i+1)+'">'+imagenConFallback(url, p.nombre)+'</button>';
+      }).join('')+'</div>' : '');
+
   document.getElementById('fichaContenido').innerHTML =
-    (galeria.length ? '<div class="ficha-galeria">'+galeria.map(function(url){ return imagenConFallback(url, p.nombre); }).join('')+'</div>' : '')+
+    heroHtml+
     '<div class="ficha-marca">'+escaparHTML(p.marca_nombre)+'</div>'+
     '<h2 id="fichaTituloAria" class="ficha-nombre">'+escaparHTML(formatearNombreProducto(p.nombre))+'</h2>'+
     '<div class="ficha-precio-fila">'+precioHtml+'</div>'+
@@ -572,18 +600,25 @@ function abrirFicha(id){
     (p.descripcion ? '<div class="ficha-seccion"><h3>Descripción</h3><p>'+escaparHTML(p.descripcion)+'</p></div>' : '')+
     (p.ingredientes ? '<div class="ficha-seccion"><h3>Ingredientes</h3><p>'+escaparHTML(p.ingredientes)+'</p></div>' : '')+
     (p.info_nutricional ? '<div class="ficha-seccion"><h3>Información nutricional</h3><p>'+escaparHTML(p.info_nutricional)+'</p></div>' : '')+
-    (relacionados.length ? '<div class="ficha-seccion"><h3>Productos relacionados</h3><div class="ficha-relacionados">'+
+    (relacionados.length ? '<div class="ficha-seccion"><h3>Productos relacionados</h3><div class="scroll-desvanecido"><div class="ficha-relacionados">'+
       relacionados.map(function(r){
-        return '<button class="ficha-relacionado card-abrir" data-id="'+escaparHTML(r.producto_id)+'" style="all:unset;cursor:pointer">'+
+        return '<button class="ficha-relacionado card-abrir" data-id="'+escaparHTML(r.producto_id)+'">'+
           '<div class="card-img">'+imagenConFallback(r.imagen_url, r.nombre)+'</div>'+
           '<div class="card-marca">'+escaparHTML(r.marca_nombre)+'</div>'+
           '<div class="card-nombre">'+escaparHTML(formatearNombreProducto(r.nombre))+'</div>'+
         '</button>';
-      }).join('')+'</div></div>' : '')+
+      }).join('')+'</div></div></div>' : '')+
     '<div class="ficha-botones">'+
       '<button class="btn btn-fantasma" id="btnFichaAgregar" data-id="'+escaparHTML(id)+'">'+(enLista?'✓ En tu lista':'+ Agregar a mi lista')+'</button>'+
       '<button class="btn btn-primario" id="btnFichaWhatsapp">Consultar por WhatsApp</button>'+
     '</div>';
+
+  document.getElementById('fichaContenido').querySelectorAll('.ficha-miniaturas button').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.getElementById('fichaHeroImg').innerHTML = imagenConFallback(btn.dataset.url, p.nombre);
+      document.querySelectorAll('.ficha-miniaturas button').forEach(function(b){ b.classList.toggle('activa', b===btn); });
+    });
+  });
 
   document.getElementById('btnFichaAgregar').addEventListener('click', function(){ toggleConsulta(id); });
   document.getElementById('btnFichaWhatsapp').addEventListener('click', function(){ enviarConsultaWhatsapp([p]); });
