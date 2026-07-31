@@ -82,7 +82,11 @@ header.marca{background:var(--marca);color:#fff;}
 .chips-fila::-webkit-scrollbar{display:none;}
 .chip{flex:none;padding:7px 14px;border:1.5px solid var(--borde);border-radius:999px;background:#fff;color:var(--carbon-60);font-size:.8rem;font-weight:600;white-space:nowrap;transition:background .12s,color .12s,border-color .12s;}
 .chip.activo{border-color:var(--marca);background:var(--marca);color:#fff;}
+.chip.chip-destacado{margin-left:auto;}
+.chip.chip-destacado.activo{border-color:var(--amarillo);background:var(--amarillo);color:#2A1F04;}
 .chip .chip-count{opacity:.7;font-weight:500;}
+.card-etiquetas{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;}
+.etiqueta{padding:2px 7px;border-radius:999px;background:var(--hueso);color:var(--carbon-60);font-size:.62rem;font-weight:600;white-space:nowrap;}
 
 /* ── Grid de productos ── */
 .contenido{max-width:820px;margin:0 auto;padding:18px 16px 8px;}
@@ -100,16 +104,17 @@ header.marca{background:var(--marca);color:#fff;}
 .badge-destacado{background:var(--amarillo);color:#2A1F04;}
 .badge-oferta{background:var(--rojo);}
 .card-img{position:relative;height:104px;display:flex;align-items:center;justify-content:center;background:var(--hueso);border-radius:var(--radio-sm);overflow:hidden;margin-bottom:8px;}
-.card-img img{width:100%;height:100%;object-fit:contain;}
+.card-img img{width:100%;height:100%;object-fit:cover;}
 .sin-imagen{font-size:28px;opacity:.35;}
 .spinner{width:22px;height:22px;border:3px solid var(--borde);border-top-color:var(--marca);border-radius:50%;animation:girar-spinner .7s linear infinite;}
 .spinner-imagen{position:absolute;inset:0;margin:auto;width:18px;height:18px;border-width:2.5px;z-index:2;}
 .spinner-pagina{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;}
 .spinner-pagina .spinner{width:30px;height:30px;border-color:rgba(255,255,255,.35);border-top-color:#fff;}
 @keyframes girar-spinner{to{transform:rotate(360deg);}}
+.card-abrir{display:flex;flex-direction:column;flex:1;width:100%;text-align:left;border:none;background:none;padding:0;margin:0;font:inherit;cursor:pointer;}
 .card-marca{font-size:.62rem;text-transform:uppercase;color:var(--carbon-60);letter-spacing:.3px;overflow-wrap:anywhere;}
-.card-nombre{font-size:.82rem;font-weight:700;margin:2px 0 6px;overflow-wrap:anywhere;}
-.card-precio{font-size:.92rem;font-weight:800;margin-top:auto;}
+.card-nombre{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;font-size:.82rem;font-weight:700;line-height:1.25;margin:2px 0 6px;overflow-wrap:anywhere;}
+.card-precio{font-size:.92rem;font-weight:800;margin-top:auto;padding-top:6px;}
 .card-precio .tachado{margin-left:6px;font-size:.72rem;font-weight:600;color:var(--carbon-60);text-decoration:line-through;}
 .card-estrellas{color:var(--amarillo);font-size:.75rem;margin-top:2px;}
 .card-btn-agregar{margin-top:8px;padding:7px;border-radius:var(--radio-sm);border:1.5px solid var(--marca);color:var(--marca);font-size:.72rem;font-weight:700;background:#fff;transition:background .12s,color .12s;}
@@ -224,6 +229,8 @@ let listaConsulta = new Map(); // producto_id -> producto
 let filtroTexto = '';
 let filtroEspecie = '';
 let filtroCategoria = '';
+let filtroEtapa = '';
+let filtroSoloDestacados = false;
 let ordenActual = 'relevancia';
 let claveAlmacenamiento = '';
 let ultimoFocoAntesDeOverlay = null;
@@ -343,8 +350,43 @@ function categoriasUnicas(){
   });
   return set;
 }
+function etapaDe(p){ return p.edad_etaria_canonica || p.ali_edad_etaria || ''; }
+function etapasUnicas(){
+  const set = new Map();
+  CATALOGO.productos.forEach(function(p){
+    const e = etapaDe(p);
+    if(e) set.set(e, e);
+  });
+  return set;
+}
 function contarPor(campo, valor){
   return CATALOGO.productos.filter(function(p){ return String(p[campo]||'')===String(valor); }).length;
+}
+function contarEtapa(valor){
+  return CATALOGO.productos.filter(function(p){ return etapaDe(p)===valor; }).length;
+}
+function contarDestacados(){
+  return CATALOGO.productos.filter(function(p){ return !!p.destacado; }).length;
+}
+
+// Emoji por especie/etapa — heurística por nombre, para no depender de
+// que el ERP mande un ícono. Si el texto no matchea nada conocido, cae a
+// un emoji genérico en vez de romper o dejar el chip sin ícono.
+function emojiEspecie(nombre){
+  const n = String(nombre||'').toLowerCase();
+  if(n.indexOf('perro')!==-1 || n.indexOf('canin')!==-1) return '🐕';
+  if(n.indexOf('gato')!==-1 || n.indexOf('felin')!==-1) return '🐱';
+  if(n.indexOf('ave')!==-1 || n.indexOf('pajar')!==-1) return '🐦';
+  if(n.indexOf('pez')!==-1 || n.indexOf('acuar')!==-1) return '🐟';
+  if(n.indexOf('roedor')!==-1 || n.indexOf('conejo')!==-1 || n.indexOf('hamster')!==-1) return '🐹';
+  return '🐾';
+}
+function emojiEtapa(nombre){
+  const n = String(nombre||'').toLowerCase();
+  if(n.indexOf('cachorro')!==-1 || n.indexOf('kitten')!==-1 || n.indexOf('junior')!==-1 || n.indexOf('puppy')!==-1) return '🍼';
+  if(n.indexOf('senior')!==-1 || n.indexOf('mayor')!==-1) return '⭐';
+  if(n.indexOf('adulto')!==-1) return '🔵';
+  return '🔹';
 }
 
 function renderPagina(){
@@ -356,16 +398,22 @@ function renderPagina(){
 
   const especies = especiesUnicas();
   const categorias = categoriasUnicas();
+  const etapas = etapasUnicas();
 
   const chipsEspecie = ['<div class="chip activo" data-tipo="especie" data-val="">Todas</div>']
     .concat(Array.from(especies.entries()).map(function(par){
-      return '<div class="chip" data-tipo="especie" data-val="'+escaparHTML(par[0])+'">'+escaparHTML(par[1])+' <span class="chip-count">('+contarPor('especie_id',par[0])+')</span></div>';
+      return '<div class="chip" data-tipo="especie" data-val="'+escaparHTML(par[0])+'">'+emojiEspecie(par[1])+' '+escaparHTML(par[1])+' <span class="chip-count">('+contarPor('especie_id',par[0])+')</span></div>';
     })).join('');
+
+  const chipsEtapa = etapas.size ? ['<div class="chip activo" data-tipo="etapa" data-val="">Todas las etapas</div>']
+    .concat(Array.from(etapas.keys()).map(function(e){
+      return '<div class="chip" data-tipo="etapa" data-val="'+escaparHTML(e)+'">'+emojiEtapa(e)+' '+escaparHTML(e)+' <span class="chip-count">('+contarEtapa(e)+')</span></div>';
+    })).join('') : '';
 
   const chipsCategoria = ['<div class="chip activo" data-tipo="categoria" data-val="">Todas</div>']
     .concat(Array.from(categorias.entries()).map(function(par){
       return '<div class="chip" data-tipo="categoria" data-val="'+escaparHTML(par[0])+'">'+escaparHTML(par[1])+' <span class="chip-count">('+contarPor('categoria_id',par[0])+')</span></div>';
-    })).join('');
+    })).join('') + '<div class="chip chip-destacado" id="chipDestacadosPublico">★ Destacados <span class="chip-count">('+contarDestacados()+')</span></div>';
 
   document.getElementById('raiz').innerHTML =
     '<header class="marca">'+
@@ -393,6 +441,7 @@ function renderPagina(){
         '</select>'+
       '</div>'+
       '<div id="chipsEspecie" class="chips-fila">'+chipsEspecie+'</div>'+
+      (chipsEtapa ? '<div id="chipsEtapa" class="chips-fila">'+chipsEtapa+'</div>' : '')+
       '<div id="chipsCategoria" class="chips-fila">'+chipsCategoria+'</div>'+
     '</div></div>'+
     '<main class="contenido">'+
@@ -446,10 +495,25 @@ function renderPagina(){
     this.querySelectorAll('.chip').forEach(function(c){ c.classList.toggle('activo', c===chip); });
     aplicarFiltros();
   });
+  const chipsEtapaEl = document.getElementById('chipsEtapa');
+  if(chipsEtapaEl){
+    chipsEtapaEl.addEventListener('click', function(e){
+      const chip = e.target.closest('.chip'); if(!chip) return;
+      filtroEtapa = chip.dataset.val;
+      this.querySelectorAll('.chip').forEach(function(c){ c.classList.toggle('activo', c===chip); });
+      aplicarFiltros();
+    });
+  }
   document.getElementById('chipsCategoria').addEventListener('click', function(e){
     const chip = e.target.closest('.chip'); if(!chip) return;
+    if(chip.id === 'chipDestacadosPublico'){
+      filtroSoloDestacados = !filtroSoloDestacados;
+      chip.classList.toggle('activo', filtroSoloDestacados);
+      aplicarFiltros();
+      return;
+    }
     filtroCategoria = chip.dataset.val;
-    this.querySelectorAll('.chip').forEach(function(c){ c.classList.toggle('activo', c===chip); });
+    this.querySelectorAll('.chip').forEach(function(c){ if(c.id !== 'chipDestacadosPublico') c.classList.toggle('activo', c===chip); });
     aplicarFiltros();
   });
   document.getElementById('btnCerrarFicha').addEventListener('click', cerrarFicha);
@@ -481,6 +545,8 @@ function aplicarFiltros(){
   let lista = CATALOGO.productos.slice();
   if(filtroEspecie) lista = lista.filter(function(p){ return String(p.especie_id||'')===filtroEspecie; });
   if(filtroCategoria) lista = lista.filter(function(p){ return String(p.categoria_id||'')===filtroCategoria; });
+  if(filtroEtapa) lista = lista.filter(function(p){ return etapaDe(p)===filtroEtapa; });
+  if(filtroSoloDestacados) lista = lista.filter(function(p){ return !!p.destacado; });
   if(filtroTexto){
     lista = lista.filter(function(p){
       const hay = [p.nombre,p.marca_nombre,p.sku].join(' ').toLowerCase();
@@ -502,7 +568,7 @@ function aplicarFiltros(){
   }
 
   productosActuales = lista;
-  const hayFiltrosActivos = !!(filtroTexto || filtroEspecie || filtroCategoria);
+  const hayFiltrosActivos = !!(filtroTexto || filtroEspecie || filtroCategoria || filtroEtapa || filtroSoloDestacados);
   document.getElementById('resultadoInfo').innerHTML =
     '<span>'+lista.length+(lista.length===1?' producto encontrado':' productos encontrados')+'</span>'+
     (hayFiltrosActivos ? '<button class="link-limpiar" onclick="limpiarTodosLosFiltros()">Limpiar filtros</button>' : '');
@@ -512,10 +578,14 @@ function aplicarFiltros(){
 function precioEfectivo(p){ return (p.oferta && p.precio_oferta) ? p.precio_oferta : p.precio; }
 
 function limpiarTodosLosFiltros(){
-  filtroTexto=''; filtroEspecie=''; filtroCategoria='';
+  filtroTexto=''; filtroEspecie=''; filtroCategoria=''; filtroEtapa=''; filtroSoloDestacados=false;
   document.getElementById('buscador').value='';
   document.getElementById('btnLimpiarBuscador').classList.remove('visible');
-  document.querySelectorAll('#chipsEspecie .chip, #chipsCategoria .chip').forEach(function(c){ c.classList.toggle('activo', c.dataset.val===''); });
+  document.querySelectorAll('#chipsEspecie .chip, #chipsEtapa .chip').forEach(function(c){ c.classList.toggle('activo', c.dataset.val===''); });
+  document.querySelectorAll('#chipsCategoria .chip').forEach(function(c){
+    if(c.id === 'chipDestacadosPublico') c.classList.remove('activo');
+    else c.classList.toggle('activo', c.dataset.val==='');
+  });
   aplicarFiltros();
 }
 
@@ -534,14 +604,20 @@ function renderGrid(){
     if(p.oferta && p.precio_oferta){
       precioHtml = '$'+monto(p.precio_oferta)+'<span class="tachado">$'+monto(p.precio)+'</span>';
     }
+    const etapa = etapaDe(p);
+    const etiquetas = [
+      p.especie_nombre ? emojiEspecie(p.especie_nombre)+' '+p.especie_nombre : '',
+      etapa ? emojiEtapa(etapa)+' '+etapa : '',
+    ].filter(Boolean);
     return '<article class="card" data-id="'+escaparHTML(p.producto_id)+'">'+
       '<div class="card-badges">'+
         (p.destacado ? '<span class="badge badge-destacado">★ Destacado</span>' : '')+
         (p.oferta ? '<span class="badge badge-oferta">Oferta</span>' : '')+
       '</div>'+
-      '<button class="card-abrir" data-id="'+escaparHTML(p.producto_id)+'" style="all:unset;cursor:pointer;display:block;">'+
+      '<button class="card-abrir" data-id="'+escaparHTML(p.producto_id)+'">'+
         '<div class="card-img">'+imagenConFallback(p.imagen_url, p.nombre)+'</div>'+
         '<div class="card-marca">'+escaparHTML(p.marca_nombre)+'</div>'+
+        (etiquetas.length ? '<div class="card-etiquetas">'+etiquetas.map(function(t){ return '<span class="etiqueta">'+escaparHTML(t)+'</span>'; }).join('')+'</div>' : '')+
         '<div class="card-nombre">'+escaparHTML(formatearNombreProducto(p.nombre))+'</div>'+
         (p.estrella ? '<div class="card-estrellas">'+estrellasTexto(p.estrella)+'</div>' : '')+
         '<div class="card-precio">'+precioHtml+'</div>'+
