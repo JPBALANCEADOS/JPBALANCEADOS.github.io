@@ -120,12 +120,14 @@ header.marca{background:var(--marca);color:#fff;}
 .hoja{background:#fff;width:100%;max-width:520px;max-height:92vh;overflow-y:auto;border-radius:20px 20px 0 0;padding:18px 18px 22px;transform:translateY(100%);transition:transform .25s cubic-bezier(.32,.72,0,1);}
 .overlay.abierto .hoja{transform:translateY(0);}
 @media (min-width:640px){ .hoja{border-radius:var(--radio);max-height:88vh;transform:translateY(12px) scale(.98);opacity:0;transition:transform .2s ease, opacity .2s ease;} .overlay.abierto .hoja{transform:translateY(0) scale(1);opacity:1;} }
+.ficha-cuerpo{display:block;}
 .hoja-agarre{width:40px;height:4px;border-radius:4px;background:var(--borde);margin:0 auto 12px;}
 .hoja-cerrar{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;background:var(--hueso);font-size:16px;display:flex;align-items:center;justify-content:center;z-index:2;}
 
 /* ── Ficha de producto ── */
 .ficha-hero{position:relative;height:min(280px,42vh);border-radius:var(--radio);background:var(--hueso);overflow:hidden;margin-bottom:10px;}
-.ficha-hero > div{width:100%;height:100%;}
+.ficha-hero-fondo{position:absolute;inset:-14px;width:calc(100% + 28px);height:calc(100% + 28px);object-fit:cover;filter:blur(22px) brightness(.92);transform:scale(1.1);}
+.ficha-hero > div{position:relative;width:100%;height:100%;z-index:1;}
 .ficha-hero img{width:100%;height:100%;object-fit:contain;}
 .ficha-hero .sin-imagen{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:56px;}
 .ficha-hero-badges{position:absolute;top:10px;left:10px;display:flex;flex-direction:column;gap:4px;}
@@ -133,6 +135,18 @@ header.marca{background:var(--marca);color:#fff;}
 .ficha-miniaturas button{flex:none;width:52px;height:52px;padding:0;border-radius:var(--radio-sm);overflow:hidden;background:var(--hueso);border:2px solid transparent;scroll-snap-align:start;opacity:.65;transition:opacity .12s,border-color .12s;}
 .ficha-miniaturas button.activa{opacity:1;border-color:var(--marca);}
 .ficha-miniaturas img{width:100%;height:100%;object-fit:cover;}
+
+/* Desktop: dos columnas — imagen fija a la izquierda, info a la derecha.
+   Va DESPUÉS de las reglas base de .ficha-hero para poder pisarlas
+   (misma especificidad — si quedara antes en el archivo, la regla base
+   la pisaría a ella en vez de al revés). */
+@media (min-width:860px){
+  .hoja-ficha{max-width:900px;}
+  .ficha-cuerpo{display:grid;grid-template-columns:340px 1fr;gap:26px;align-items:start;}
+  .ficha-media{position:sticky;top:0;}
+  .ficha-hero{height:340px;margin-bottom:8px;}
+}
+
 .scroll-desvanecido{position:relative;}
 .scroll-desvanecido .ficha-relacionados{-webkit-mask-image:linear-gradient(to right,transparent,#000 18px,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(to right,transparent,#000 18px,#000 calc(100% - 28px),transparent);}
 .ficha-relacionados{display:flex;gap:10px;overflow-x:auto;margin-top:8px;padding:2px 2px 6px;scroll-snap-type:x proximity;}
@@ -384,7 +398,7 @@ function renderPagina(){
       '<button id="btnEnviarConsulta">🐾 Enviar consulta</button>'+
     '</div>'+
     '<div id="overlayFicha" class="overlay">'+
-      '<div class="hoja" role="dialog" aria-modal="true" aria-labelledby="fichaTituloAria">'+
+      '<div class="hoja hoja-ficha" role="dialog" aria-modal="true" aria-labelledby="fichaTituloAria">'+
         '<button class="hoja-cerrar" id="btnCerrarFicha" aria-label="Cerrar">✕</button>'+
         '<div class="hoja-agarre"></div>'+
         '<div id="fichaContenido"></div>'+
@@ -566,6 +580,12 @@ function productosRelacionados(p){
   }).slice(0,6);
 }
 
+function htmlImagenHero(url, alt){
+  if(!url) return '<span class="sin-imagen">🐾</span>';
+  return '<img class="ficha-hero-fondo" src="'+escaparHTML(url)+'" alt="" aria-hidden="true">'+
+    '<img src="'+escaparHTML(url)+'" alt="'+escaparHTML(alt)+'" loading="lazy" onerror="this.parentElement.querySelector(\'.ficha-hero-fondo\').style.display=\'none\';this.replaceWith(Object.assign(document.createElement(\'span\'),{className:\'sin-imagen\',textContent:\'\ud83d\udc3e\'}))">';
+}
+
 function abrirFicha(id){
   const p = CATALOGO.productos.find(function(x){ return x.producto_id===id; });
   if(!p) return;
@@ -578,28 +598,38 @@ function abrirFicha(id){
     precioHtml = '<span class="ficha-precio">$'+monto(p.precio_oferta)+'</span><span class="ficha-precio tachado">$'+monto(p.precio)+'</span>';
   }
 
-  const badgesHero = (p.destacado ? '<span class="badge badge-destacado">★ Destacado</span>' : '') +
+  const badgesHero = (p.destacado ? '<span class="badge badge-destacado">\u2605 Destacado</span>' : '') +
     (p.oferta ? '<span class="badge badge-oferta">Oferta</span>' : '');
 
-  const heroHtml =
-    '<div class="ficha-hero">'+
-      (badgesHero ? '<div class="ficha-hero-badges">'+badgesHero+'</div>' : '')+
-      '<div id="fichaHeroImg">'+imagenConFallback(galeria[0], p.nombre)+'</div>'+
-    '</div>'+
-    (galeria.length > 1 ? '<div class="ficha-miniaturas">'+
-      galeria.map(function(url, i){
-        return '<button data-idx="'+i+'" data-url="'+escaparHTML(url)+'" class="'+(i===0?'activa':'')+'" aria-label="Ver imagen '+(i+1)+'">'+imagenConFallback(url, p.nombre)+'</button>';
-      }).join('')+'</div>' : '');
+  const mediaHtml =
+    '<div class="ficha-media">'+
+      '<div class="ficha-hero">'+
+        (badgesHero ? '<div class="ficha-hero-badges">'+badgesHero+'</div>' : '')+
+        '<div id="fichaHeroImg">'+htmlImagenHero(galeria[0], p.nombre)+'</div>'+
+      '</div>'+
+      (galeria.length > 1 ? '<div class="ficha-miniaturas">'+
+        galeria.map(function(url, i){
+          return '<button data-idx="'+i+'" data-url="'+escaparHTML(url)+'" class="'+(i===0?'activa':'')+'" aria-label="Ver imagen '+(i+1)+'">'+imagenConFallback(url, p.nombre)+'</button>';
+        }).join('')+'</div>' : '')+
+    '</div>';
+
+  const infoHtml =
+    '<div class="ficha-info">'+
+      '<div class="ficha-marca">'+escaparHTML(p.marca_nombre)+'</div>'+
+      '<h2 id="fichaTituloAria" class="ficha-nombre">'+escaparHTML(formatearNombreProducto(p.nombre))+'</h2>'+
+      '<div class="ficha-precio-fila">'+precioHtml+'</div>'+
+      (p.estrella ? '<div class="ficha-estrellas">'+estrellasTexto(p.estrella)+'</div>' : '')+
+      (p.descripcion ? '<div class="ficha-seccion"><h3>Descripci\u00f3n</h3><p>'+escaparHTML(p.descripcion)+'</p></div>' : '')+
+      (p.ingredientes ? '<div class="ficha-seccion"><h3>Ingredientes</h3><p>'+escaparHTML(p.ingredientes)+'</p></div>' : '')+
+      (p.info_nutricional ? '<div class="ficha-seccion"><h3>Informaci\u00f3n nutricional</h3><p>'+escaparHTML(p.info_nutricional)+'</p></div>' : '')+
+      '<div class="ficha-botones">'+
+        '<button class="btn btn-fantasma" id="btnFichaAgregar" data-id="'+escaparHTML(id)+'">'+(enLista?'\u2713 En tu lista':'+ Agregar a mi lista')+'</button>'+
+        '<button class="btn btn-primario" id="btnFichaWhatsapp">Consultar por WhatsApp</button>'+
+      '</div>'+
+    '</div>';
 
   document.getElementById('fichaContenido').innerHTML =
-    heroHtml+
-    '<div class="ficha-marca">'+escaparHTML(p.marca_nombre)+'</div>'+
-    '<h2 id="fichaTituloAria" class="ficha-nombre">'+escaparHTML(formatearNombreProducto(p.nombre))+'</h2>'+
-    '<div class="ficha-precio-fila">'+precioHtml+'</div>'+
-    (p.estrella ? '<div class="ficha-estrellas">'+estrellasTexto(p.estrella)+'</div>' : '')+
-    (p.descripcion ? '<div class="ficha-seccion"><h3>Descripción</h3><p>'+escaparHTML(p.descripcion)+'</p></div>' : '')+
-    (p.ingredientes ? '<div class="ficha-seccion"><h3>Ingredientes</h3><p>'+escaparHTML(p.ingredientes)+'</p></div>' : '')+
-    (p.info_nutricional ? '<div class="ficha-seccion"><h3>Información nutricional</h3><p>'+escaparHTML(p.info_nutricional)+'</p></div>' : '')+
+    '<div class="ficha-cuerpo">'+mediaHtml+infoHtml+'</div>'+
     (relacionados.length ? '<div class="ficha-seccion"><h3>Productos relacionados</h3><div class="scroll-desvanecido"><div class="ficha-relacionados">'+
       relacionados.map(function(r){
         return '<button class="ficha-relacionado card-abrir" data-id="'+escaparHTML(r.producto_id)+'">'+
@@ -607,15 +637,11 @@ function abrirFicha(id){
           '<div class="card-marca">'+escaparHTML(r.marca_nombre)+'</div>'+
           '<div class="card-nombre">'+escaparHTML(formatearNombreProducto(r.nombre))+'</div>'+
         '</button>';
-      }).join('')+'</div></div></div>' : '')+
-    '<div class="ficha-botones">'+
-      '<button class="btn btn-fantasma" id="btnFichaAgregar" data-id="'+escaparHTML(id)+'">'+(enLista?'✓ En tu lista':'+ Agregar a mi lista')+'</button>'+
-      '<button class="btn btn-primario" id="btnFichaWhatsapp">Consultar por WhatsApp</button>'+
-    '</div>';
+      }).join('')+'</div></div></div>' : '');
 
   document.getElementById('fichaContenido').querySelectorAll('.ficha-miniaturas button').forEach(function(btn){
     btn.addEventListener('click', function(){
-      document.getElementById('fichaHeroImg').innerHTML = imagenConFallback(btn.dataset.url, p.nombre);
+      document.getElementById('fichaHeroImg').innerHTML = htmlImagenHero(btn.dataset.url, p.nombre);
       document.querySelectorAll('.ficha-miniaturas button').forEach(function(b){ b.classList.toggle('activa', b===btn); });
     });
   });
