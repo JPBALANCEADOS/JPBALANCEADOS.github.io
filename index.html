@@ -25,6 +25,9 @@
   --amarillo:#C89B3C;
   --radio:16px;
   --radio-sm:10px;
+  --sombra-sm:0 2px 8px rgba(26,29,27,.06);
+  --sombra-md:0 10px 24px rgba(26,29,27,.09);
+  --sombra-lg:0 14px 34px rgba(0,0,0,.25);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html,body{overflow-x:hidden;max-width:100%;}
@@ -32,12 +35,15 @@ body{font-family:'Work Sans',system-ui,sans-serif;background:var(--hueso);color:
 h1,h2,h3{font-family:'Big Shoulders',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.3px;line-height:1.05;}
 button{font:inherit;cursor:pointer;border:none;background:none;}
 img{max-width:100%;display:block;}
+a{color:inherit;}
 :focus-visible{outline:3px solid var(--marca);outline-offset:2px;}
 @media (prefers-reduced-motion: reduce){ *{transition:none!important;animation:none!important;} }
+.icono{display:inline-flex;flex:none;}
+.icono svg{display:block;}
 
 /* ── Estados de carga / vacío / error ── */
 .estado-pantalla{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:40px 24px;text-align:center;color:var(--carbon-60);}
-.estado-pantalla .glifo{font-size:34px;}
+.estado-pantalla .glifo{color:var(--carbon-60);}
 .estado-pantalla h2{font-size:20px;color:var(--carbon);text-transform:none;letter-spacing:0;}
 .estado-pantalla p{font-size:14px;max-width:360px;}
 .estado-pantalla .btn{margin-top:6px;padding:0 20px;height:42px;}
@@ -54,27 +60,40 @@ header.marca{background:var(--marca);color:#fff;}
 .portada{position:relative;min-height:150px;background:linear-gradient(160deg,var(--marca-oscura),var(--marca));background-size:cover;background-position:center;}
 .marca-info{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:22px 20px;max-width:820px;margin:0 auto;}
 .marca-info-izq{display:flex;align-items:center;gap:14px;min-width:0;}
-.marca-logo{width:60px;height:60px;border-radius:50%;overflow:hidden;flex:none;background:#fff;box-shadow:0 4px 14px rgba(0,0,0,.25);}
+.marca-logo{width:60px;height:60px;border-radius:50%;overflow:hidden;flex:none;background:#fff;box-shadow:var(--sombra-md);}
 .marca-logo img{width:100%;height:100%;object-fit:cover;}
-.marca-logo .sin-logo{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:24px;}
+.marca-logo .sin-logo{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--marca);}
 .marca-nombre{font-size:clamp(19px,5vw,30px);color:#fff;overflow-wrap:break-word;word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-shadow:0 1px 6px rgba(0,0,0,.35);}
-.btn-compartir{flex:none;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;}
-.btn-compartir:hover{background:rgba(255,255,255,.26);}
+.marca-acciones{display:flex;gap:8px;flex:none;}
+.btn-header-icono{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;display:flex;align-items:center;justify-content:center;transition:background .15s;}
+.btn-header-icono:hover{background:rgba(255,255,255,.28);}
+.btn-header-whatsapp{width:auto;padding:0 16px;gap:7px;background:#fff;color:var(--marca-oscura);font-size:.8rem;font-weight:700;}
+.btn-header-whatsapp:hover{background:#fff;opacity:.9;}
+.btn-header-whatsapp span.texto-wa{display:none;}
+@media (min-width:480px){ .btn-header-whatsapp{width:auto;} .btn-header-whatsapp span.texto-wa{display:inline;} }
+
+/* ── Franja de beneficios ── */
+.beneficios{background:#fff;border-bottom:1px solid var(--borde);}
+.beneficios-inner{max-width:820px;margin:0 auto;padding:12px 20px;display:grid;grid-template-columns:repeat(2,1fr);gap:10px 16px;}
+@media (min-width:640px){ .beneficios-inner{grid-template-columns:repeat(4,1fr);} }
+.beneficio-item{display:flex;align-items:center;gap:8px;font-size:.72rem;font-weight:600;color:var(--carbon-60);}
+.beneficio-item .icono{color:var(--marca);}
 
 /* ── Buscador + filtros ── */
-.barra-filtros{position:sticky;top:0;z-index:20;background:var(--blanco);border-bottom:1px solid var(--borde);box-shadow:0 2px 10px rgba(0,0,0,.04);}
+.barra-filtros{position:sticky;top:0;z-index:20;background:var(--blanco);border-bottom:1px solid var(--borde);box-shadow:var(--sombra-sm);}
 .barra-filtros-inner{max-width:820px;margin:0 auto;padding:12px 16px;display:flex;flex-direction:column;gap:10px;}
 .fila-buscador-orden{display:flex;gap:8px;}
 .buscador-wrap{position:relative;flex:1;min-width:0;}
 .buscador-wrap input{width:100%;height:44px;padding:0 34px 0 38px;border:1.5px solid var(--borde);border-radius:999px;font-size:.92rem;outline:none;background:var(--hueso);}
 .buscador-wrap input:focus{border-color:var(--marca);background:#fff;}
-.buscador-icono{position:absolute;top:50%;left:14px;transform:translateY(-50%);font-size:15px;pointer-events:none;opacity:.6;}
+.buscador-icono{position:absolute;top:50%;left:14px;transform:translateY(-50%);color:var(--carbon-60);pointer-events:none;}
 .buscador-limpiar{display:none;position:absolute;top:50%;right:10px;transform:translateY(-50%);width:22px;height:22px;border-radius:50%;background:var(--borde);color:var(--carbon-60);font-size:12px;align-items:center;justify-content:center;}
 .buscador-limpiar.visible{display:flex;}
 .orden-select{flex:none;height:44px;padding:0 12px;border:1.5px solid var(--borde);border-radius:999px;background:var(--hueso);font-size:.8rem;font-weight:600;color:var(--carbon-60);max-width:132px;}
 .chips-fila{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;}
 .chips-fila::-webkit-scrollbar{display:none;}
 .chip{flex:none;padding:7px 14px;border:1.5px solid var(--borde);border-radius:999px;background:#fff;color:var(--carbon-60);font-size:.8rem;font-weight:600;white-space:nowrap;transition:background .12s,color .12s,border-color .12s;}
+.chip:not(.activo):hover{border-color:var(--marca);color:var(--marca);}
 .chip.activo{border-color:var(--marca);background:var(--marca);color:#fff;}
 .chip.chip-destacado{margin-left:auto;}
 .chip.chip-destacado.activo{border-color:var(--amarillo);background:var(--amarillo);color:#2A1F04;}
@@ -83,25 +102,25 @@ header.marca{background:var(--marca);color:#fff;}
 .etiqueta{padding:2px 7px;border-radius:999px;background:var(--hueso);color:var(--carbon-60);font-size:.62rem;font-weight:600;white-space:nowrap;}
 
 /* ── Grid de productos ── */
-.contenido{max-width:820px;margin:0 auto;padding:18px 16px 8px;}
-.resultado-info{font-size:.8rem;color:var(--carbon-60);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.contenido{max-width:820px;margin:0 auto;padding:20px 16px 10px;}
+.resultado-info{font-size:.8rem;color:var(--carbon-60);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;}
 .resultado-info .link-limpiar{color:var(--marca);font-weight:700;font-size:.78rem;flex:none;}
-.grid-productos{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+.grid-productos{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
 @media (min-width:560px){ .grid-productos{grid-template-columns:repeat(3,1fr);} }
 @media (min-width:820px){ .grid-productos{grid-template-columns:repeat(4,1fr);} }
 
 /* La tarjeta: imagen = 60-70% del alto, resto = info. Fondo blanco liso,
    sin sombras/gradientes en la imagen — el producto es el protagonista. */
-.card{min-width:0;background:#fff;border-radius:var(--radio);border:1px solid var(--borde);padding:10px;position:relative;text-align:left;display:flex;flex-direction:column;transition:transform .12s ease, box-shadow .12s ease;animation:aparecer .25s ease both;}
+.card{min-width:0;background:#fff;border-radius:var(--radio);border:1px solid var(--borde);padding:10px;position:relative;text-align:left;display:flex;flex-direction:column;transition:transform .14s ease, box-shadow .14s ease, border-color .14s ease;animation:aparecer .25s ease both;}
 @keyframes aparecer{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
-.card:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(26,29,27,.08);}
+.card:hover{transform:translateY(-3px);box-shadow:var(--sombra-md);border-color:#d8d4c8;}
 .card-badges{position:absolute;top:8px;left:8px;display:flex;flex-direction:column;gap:4px;z-index:1;}
 .badge{padding:2px 8px;border-radius:999px;font-size:.6rem;font-weight:800;text-transform:uppercase;color:#fff;}
 .badge-oferta{background:var(--rojo);font-size:.66rem;padding:4px 10px;}
 .badge-destacado{background:var(--amarillo);color:#2A1F04;}
 .card-img{position:relative;aspect-ratio:1/1;width:100%;display:flex;align-items:center;justify-content:center;background:#fff;border-radius:var(--radio-sm);overflow:hidden;margin-bottom:8px;}
 .card-img img{width:100%;height:100%;object-fit:contain;}
-.sin-imagen{font-size:28px;opacity:.35;}
+.sin-imagen{color:var(--carbon-60);opacity:.3;}
 .card-abrir{display:flex;flex-direction:column;flex:1;width:100%;text-align:left;border:none;background:none;padding:0;margin:0;font:inherit;cursor:pointer;}
 .card-marca{font-size:.62rem;text-transform:uppercase;color:var(--carbon-60);letter-spacing:.3px;overflow-wrap:anywhere;}
 .card-nombre{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;font-size:.82rem;font-weight:700;line-height:1.25;margin:2px 0 6px;overflow-wrap:anywhere;}
@@ -110,9 +129,12 @@ header.marca{background:var(--marca);color:#fff;}
 .card-precio .tachado{margin-left:6px;font-size:.72rem;font-weight:600;color:var(--carbon-60);text-decoration:line-through;}
 .card-estrellas{color:var(--amarillo);font-size:.75rem;margin-top:2px;}
 .card-btn-agregar{margin-top:8px;padding:7px;border-radius:var(--radio-sm);border:1.5px solid var(--marca);color:var(--marca);font-size:.72rem;font-weight:700;background:#fff;transition:background .12s,color .12s;}
+.card-btn-agregar:hover{background:var(--marca-pale);}
 .card-btn-agregar.en-lista{background:var(--marca);color:#fff;}
+.card-btn-agregar.en-lista:hover{background:var(--marca-oscura);}
 
-.vacio-grid{grid-column:1/-1;padding:40px 20px;text-align:center;color:var(--carbon-60);display:flex;flex-direction:column;align-items:center;gap:12px;}
+.vacio-grid{grid-column:1/-1;padding:48px 20px;text-align:center;color:var(--carbon-60);display:flex;flex-direction:column;align-items:center;gap:12px;}
+.vacio-grid .icono{color:var(--carbon-60);opacity:.35;}
 
 /* ── Overlays genéricos (ficha + lista de consulta) ── */
 .overlay{display:none;position:fixed;inset:0;z-index:100;background:rgba(20,22,20,0);align-items:flex-end;justify-content:center;transition:background .22s ease;}
@@ -121,16 +143,18 @@ header.marca{background:var(--marca);color:#fff;}
 
 .hoja{background:#fff;width:100%;max-width:520px;max-height:92vh;overflow-y:auto;border-radius:20px 20px 0 0;padding:18px 18px 22px;transform:translateY(100%);transition:transform .25s cubic-bezier(.32,.72,0,1);}
 .overlay.abierto .hoja{transform:translateY(0);}
-@media (min-width:640px){ .hoja{border-radius:var(--radio);max-height:88vh;transform:translateY(12px) scale(.98);opacity:0;transition:transform .2s ease, opacity .2s ease;} .overlay.abierto .hoja{transform:translateY(0) scale(1);opacity:1;} }
+@media (min-width:640px){ .hoja{border-radius:var(--radio);max-height:88vh;box-shadow:0 24px 60px rgba(0,0,0,.25);transform:translateY(12px) scale(.98);opacity:0;transition:transform .2s ease, opacity .2s ease;} .overlay.abierto .hoja{transform:translateY(0) scale(1);opacity:1;} }
 .ficha-cuerpo{display:block;}
 .hoja-agarre{width:40px;height:4px;border-radius:4px;background:var(--borde);margin:0 auto 12px;}
-.hoja-cerrar{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;background:var(--hueso);font-size:16px;display:flex;align-items:center;justify-content:center;z-index:2;}
+.hoja-cerrar{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;background:var(--hueso);font-size:16px;display:flex;align-items:center;justify-content:center;z-index:2;transition:background .12s;}
+.hoja-cerrar:hover{background:var(--borde);}
 
 /* ── Ficha de producto: sin blur, sin degradados — la imagen sola, grande ── */
 .ficha-hero{position:relative;height:min(320px,46vh);border-radius:var(--radio);background:#fff;border:1px solid var(--borde);overflow:hidden;margin-bottom:10px;}
 #fichaHeroImg{position:relative;width:100%;height:100%;z-index:1;}
 .ficha-hero-img{position:relative;z-index:1;width:100%;height:100%;object-fit:contain;}
-.ficha-hero .sin-imagen{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:56px;}
+.ficha-hero .sin-imagen{width:100%;height:100%;display:flex;align-items:center;justify-content:center;}
+.ficha-hero .sin-imagen svg{width:64px;height:64px;}
 .ficha-hero-badges{position:absolute;top:10px;left:10px;display:flex;flex-direction:column;gap:4px;}
 .ficha-miniaturas{display:flex;gap:8px;overflow-x:auto;margin-bottom:14px;scroll-snap-type:x proximity;}
 .ficha-miniaturas button{position:relative;flex:none;width:52px;height:52px;padding:0;border-radius:var(--radio-sm);overflow:hidden;background:#fff;border:2px solid var(--borde);scroll-snap-align:start;opacity:.65;transition:opacity .12s,border-color .12s;}
@@ -156,9 +180,10 @@ header.marca{background:var(--marca);color:#fff;}
 .ficha-precio.precio-oferta{color:var(--rojo);}
 .ficha-precio.tachado{font-size:.95rem;font-weight:600;color:var(--carbon-60);text-decoration:line-through;}
 .ficha-botones{display:flex;gap:8px;margin:14px 0 4px;}
-.btn{flex:1;height:46px;border-radius:999px;font-weight:700;font-size:.88rem;display:flex;align-items:center;justify-content:center;gap:6px;transition:transform .1s ease;}
+.btn{flex:1;height:46px;border-radius:999px;font-weight:700;font-size:.88rem;display:flex;align-items:center;justify-content:center;gap:7px;transition:transform .1s ease, box-shadow .15s ease;}
 .btn:active{transform:scale(.97);}
 .btn-primario{background:var(--marca);color:#fff;}
+.btn-primario:hover{box-shadow:var(--sombra-md);}
 .btn-fantasma{background:var(--marca-pale);color:var(--marca-oscura);}
 .ficha-seccion{margin-top:16px;}
 .ficha-seccion h3{font-size:.7rem;color:var(--carbon-60);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;}
@@ -174,21 +199,33 @@ header.marca{background:var(--marca);color:#fff;}
 /* ── Lista de consulta (mini modal) ── */
 .lista-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--borde);}
 .lista-item .card-img{width:46px;height:46px;flex:none;margin:0;aspect-ratio:auto;}
+.lista-item .card-img .sin-imagen svg{width:20px;height:20px;}
 .lista-item-info{flex:1;min-width:0;}
 .lista-item-nombre{font-size:.82rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .lista-item-precio{font-size:.76rem;color:var(--carbon-60);}
-.lista-item-quitar{flex:none;width:30px;height:30px;border-radius:50%;background:var(--hueso);color:var(--carbon-60);font-size:14px;}
+.lista-item-quitar{flex:none;width:30px;height:30px;border-radius:50%;background:var(--hueso);color:var(--carbon-60);font-size:14px;transition:background .12s,color .12s;}
 .lista-item-quitar:hover{background:#ffe5e7;color:var(--rojo);}
 .lista-vacia{padding:24px 0;text-align:center;color:var(--carbon-60);font-size:.85rem;}
 
 /* ── Barra flotante de consulta (signature: no es un "carrito") ── */
-.barra-consulta{position:fixed;left:16px;right:16px;bottom:16px;z-index:60;max-width:520px;margin:0 auto;background:var(--carbon);color:#fff;border-radius:999px;padding:8px 8px 8px 4px;display:none;align-items:center;justify-content:space-between;gap:6px;box-shadow:0 14px 34px rgba(0,0,0,.25);transform:translateY(120%);transition:transform .25s cubic-bezier(.32,.72,0,1);}
+.barra-consulta{position:fixed;left:16px;right:16px;bottom:16px;z-index:60;max-width:520px;margin:0 auto;background:var(--carbon);color:#fff;border-radius:999px;padding:8px 8px 8px 4px;display:none;align-items:center;justify-content:space-between;gap:6px;box-shadow:var(--sombra-lg);transform:translateY(120%);transition:transform .25s cubic-bezier(.32,.72,0,1);}
 .barra-consulta.visible{display:flex;transform:translateY(0);}
-.barra-consulta-texto{flex:1;padding:0 8px 0 12px;font-size:.82rem;font-weight:600;text-align:left;}
-.barra-consulta-texto strong{font-family:'Big Shoulders',sans-serif;font-size:1.1rem;margin-right:4px;}
-.barra-consulta button{background:#fff;color:var(--carbon);border-radius:999px;height:40px;padding:0 16px;font-weight:700;font-size:.82rem;display:flex;align-items:center;gap:6px;flex:none;}
+.barra-consulta-texto{flex:1;padding:0 8px 0 12px;font-size:.82rem;font-weight:600;text-align:left;display:flex;align-items:center;gap:8px;}
+.barra-consulta-texto strong{font-family:'Big Shoulders',sans-serif;font-size:1.1rem;}
+.barra-consulta button{background:#fff;color:var(--carbon);border-radius:999px;height:40px;padding:0 16px;font-weight:700;font-size:.82rem;display:flex;align-items:center;gap:6px;flex:none;transition:opacity .12s;}
+.barra-consulta button:hover{opacity:.88;}
 
-.footer-nota{max-width:820px;margin:20px auto 0;padding:0 16px;font-size:.72rem;color:var(--carbon-60);text-align:center;}
+/* ── Footer ── */
+.pie{margin-top:28px;border-top:1px solid var(--borde);background:#fff;}
+.pie-inner{max-width:820px;margin:0 auto;padding:24px 16px;display:flex;flex-direction:column;gap:14px;align-items:center;text-align:center;}
+@media (min-width:640px){ .pie-inner{flex-direction:row;justify-content:space-between;text-align:left;} }
+.pie-marca{display:flex;align-items:center;gap:10px;}
+.pie-logo{width:34px;height:34px;border-radius:50%;overflow:hidden;flex:none;background:var(--hueso);}
+.pie-logo img{width:100%;height:100%;object-fit:cover;}
+.pie-nombre{font-family:'Big Shoulders',sans-serif;font-weight:700;font-size:.95rem;text-transform:uppercase;letter-spacing:.3px;}
+.pie-info{font-size:.72rem;color:var(--carbon-60);display:flex;flex-direction:column;gap:2px;}
+.pie-whatsapp{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:700;color:var(--marca);}
+.pie-plataforma{text-align:center;padding:10px 16px 18px;font-size:.66rem;color:var(--carbon-60);opacity:.7;}
 </style>
 </head>
 <body>
@@ -221,6 +258,24 @@ let ordenActual = 'relevancia';
 let claveAlmacenamiento = '';
 let ultimoFocoAntesDeOverlay = null;
 
+// ── Set de íconos SVG en línea (currentColor → heredan el color del
+// texto/botón). Reemplazan los emojis: se ven iguales en cualquier
+// dispositivo/SO y dan una terminación más prolija/comercial. ──
+const ICN = {
+  buscar: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
+  compartir: '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.5" x2="15.4" y2="6.5"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/></svg>',
+  whatsapp: '<svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.79.47 3.47 1.29 4.93L2 22l5.29-1.39a9.9 9.9 0 0 0 4.75 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2m.02 1.67c2.24 0 4.33.87 5.92 2.46a8.23 8.23 0 0 1 2.43 5.87c0 4.57-3.72 8.28-8.32 8.28a8.3 8.3 0 0 1-4.22-1.15l-.3-.18-3.14.82.84-3.06-.2-.32a8.2 8.2 0 0 1-1.26-4.39c0-4.6 3.72-8.33 8.25-8.33m-4.66 4.66c-.16 0-.42.06-.64.31-.22.25-.85.83-.85 2.02s.87 2.35.99 2.51c.12.16 1.7 2.68 4.19 3.65 2.07.81 2.49.65 2.94.61.45-.04 1.44-.59 1.64-1.16.2-.57.2-1.06.14-1.16-.06-.1-.22-.16-.46-.28-.24-.12-1.44-.71-1.66-.79-.22-.08-.39-.12-.55.12-.16.24-.63.79-.77.95-.14.16-.28.18-.52.06-.24-.12-1.02-.38-1.95-1.2-.72-.64-1.2-1.44-1.35-1.68-.14-.24-.02-.37.11-.49.11-.11.24-.28.36-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.55-1.34-.76-1.83-.2-.48-.4-.42-.55-.42h-.4Z"/></svg>',
+  lista: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg>',
+  pata: '<svg viewBox="0 0 24 24" fill="currentColor"><ellipse cx="7" cy="8.3" rx="2" ry="2.7"/><ellipse cx="12" cy="6" rx="2.15" ry="2.9"/><ellipse cx="17" cy="8.3" rx="2" ry="2.7"/><path d="M12 10.8c-3.3 0-6 2.1-6 4.7 0 2.6 2.6 4.2 6 4.2s6-1.6 6-4.2c0-2.6-2.7-4.7-6-4.7Z"/></svg>',
+  actualizado: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg>',
+  etiqueta: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 11 3.83A2 2 0 0 0 9.53 3H4a1 1 0 0 0-1 1v5.53a2 2 0 0 0 .59 1.41l9.58 9.58a2 2 0 0 0 2.83 0l4.59-4.59a2 2 0 0 0 0-2.83Z"/><circle cx="7.3" cy="7.3" r="1.15" fill="currentColor" stroke="none"/></svg>',
+  agregar: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 3h2l2.6 12.4A2 2 0 0 0 9.05 17H18a2 2 0 0 0 1.94-1.5L21.5 8H6.2"/><circle cx="9.3" cy="20" r="1.4"/><circle cx="17.3" cy="20" r="1.4"/></svg>',
+  alerta: '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86 1.82 18a1.5 1.5 0 0 0 1.3 2.25h17.76A1.5 1.5 0 0 0 22.18 18L13.71 3.86a1.5 1.5 0 0 0-2.42 0Z"/></svg>',
+  caja: '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 8 9-5 9 5-9 5-9-5Z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>',
+  enlace: '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17H7a5 5 0 0 1 0-10h2"/><path d="M15 7h2a5 5 0 1 1 0 10h-2"/><line x1="8" y1="12" x2="16" y2="12"/></svg>',
+};
+function iconoImg(nombre, extra){ return '<span class="icono'+(extra?(' '+extra):'')+'">'+ICN[nombre]+'</span>'; }
+
 function escaparHTML(v){
   return String(v == null ? '' : v)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
@@ -247,11 +302,11 @@ function precioEfectivo(p){ return (p.oferta && p.precio_oferta) ? p.precio_ofer
 function etapaDe(p){ return p.edad_etaria_canonica || p.ali_edad_etaria || ''; }
 
 function imagenConFallback(url, alt){
-  if(!url) return '<span class="sin-imagen">🐾</span>';
+  if(!url) return '<span class="sin-imagen">'+ICN.pata+'</span>';
   return '<span class="spinner spinner-imagen"></span>'+
     '<img src="'+escaparHTML(url)+'" alt="'+escaparHTML(alt)+'" loading="lazy" '+
     'onload="var s=this.previousElementSibling;if(s&&s.classList.contains(\'spinner-imagen\'))s.remove();" '+
-    'onerror="var s=this.previousElementSibling;if(s&&s.classList.contains(\'spinner-imagen\'))s.remove();this.replaceWith(Object.assign(document.createElement(\'span\'),{className:\'sin-imagen\',textContent:\'🐾\'}))">';
+    'onerror="var s=this.previousElementSibling;if(s&&s.classList.contains(\'spinner-imagen\'))s.remove();this.replaceWith(Object.assign(document.createElement(\'span\'),{className:\'sin-imagen\',innerHTML:ICN.pata}))">';
 }
 
 // Tarjeta de producto — se usa tanto en la grilla principal como en
@@ -287,9 +342,9 @@ function htmlTarjetaProducto(p){
   '</article>';
 }
 
-function pintarEstado(glifo, titulo, texto, mostrarReintentar){
+function pintarEstado(icono, titulo, texto, mostrarReintentar){
   document.getElementById('raiz').innerHTML =
-    '<div class="estado-pantalla"><div class="glifo">'+glifo+'</div>'+
+    '<div class="estado-pantalla"><div class="glifo">'+iconoImg(icono)+'</div>'+
     '<h2>'+escaparHTML(titulo)+'</h2><p>'+escaparHTML(texto)+'</p>'+
     (mostrarReintentar ? '<button class="btn btn-primario" onclick="location.reload()">Reintentar</button>' : '')+
     '</div>';
@@ -298,6 +353,16 @@ function pintarEstado(glifo, titulo, texto, mostrarReintentar){
 function pintarCargando(){
   document.getElementById('raiz').innerHTML =
     '<div class="pantalla-carga"><span class="spinner spinner-grande"></span><p>Cargando catálogo…</p></div>';
+}
+
+// Favicon dinámico: como este mismo HTML sirve a cientos de comercios,
+// no hay un ícono fijo posible — se arma en tiempo real con el logo del
+// negocio apenas se conoce.
+function actualizarFavicon(url){
+  if(!url) return;
+  let link = document.querySelector('link[rel="icon"]');
+  if(!link){ link = document.createElement('link'); link.rel = 'icon'; document.head.appendChild(link); }
+  link.href = url;
 }
 
 // ── Persistencia de la lista de consulta (localStorage, por catálogo) ──
@@ -320,7 +385,7 @@ function guardarListaEnStorage(){
 
 async function iniciar(){
   if(!API_URL && !CLIENTE_SLUG){
-    pintarEstado('🔗','Falta identificar el comercio','Esta página necesita saber de qué comercio es el catálogo (parámetro cliente o api en la dirección).');
+    pintarEstado('enlace','Falta identificar el comercio','Esta página necesita saber de qué comercio es el catálogo (parámetro cliente o api en la dirección).');
     return;
   }
   pintarCargando();
@@ -330,12 +395,12 @@ async function iniciar(){
       const resDirectorio = await fetch(DIRECTORIO_URL + '?catalogo_de=' + encodeURIComponent(CLIENTE_SLUG), { cache: 'no-store' });
       const jsonDirectorio = await resDirectorio.json();
       if(!jsonDirectorio || !jsonDirectorio.success){
-        pintarEstado('📭','No encontramos ese catálogo', (jsonDirectorio && jsonDirectorio.error) || 'Revisá el enlace e intentá de nuevo.', true);
+        pintarEstado('caja','No encontramos ese catálogo', (jsonDirectorio && jsonDirectorio.error) || 'Revisá el enlace e intentá de nuevo.', true);
         return;
       }
       API_URL = jsonDirectorio.api_url;
     }catch(e){
-      pintarEstado('⚠️','No se pudo identificar el comercio','Revisá tu conexión e intentá de nuevo en unos minutos.', true);
+      pintarEstado('alerta','No se pudo identificar el comercio','Revisá tu conexión e intentá de nuevo en unos minutos.', true);
       return;
     }
   }
@@ -344,7 +409,7 @@ async function iniciar(){
     const res = await fetch(API_URL, { cache: 'no-store' });
     const json = await res.json();
     if(!json || !json.success){
-      pintarEstado('📭','Este catálogo todavía no está disponible', (json && json.error) || 'Volvé a intentarlo más tarde.', true);
+      pintarEstado('caja','Este catálogo todavía no está disponible', (json && json.error) || 'Volvé a intentarlo más tarde.', true);
       return;
     }
     CATALOGO = json.data;
@@ -352,7 +417,7 @@ async function iniciar(){
     cargarListaGuardada();
     renderPagina();
   }catch(e){
-    pintarEstado('⚠️','No se pudo cargar el catálogo','Revisá tu conexión e intentá de nuevo en unos minutos.', true);
+    pintarEstado('alerta','No se pudo cargar el catálogo','Revisá tu conexión e intentá de nuevo en unos minutos.', true);
   }
 }
 
@@ -387,6 +452,9 @@ function renderPagina(){
   document.documentElement.style.setProperty('--marca', colorMarca);
   const tituloPagina = negocio.nombre_comercio ? (negocio.nombre_comercio + ' — Catálogo') : 'Catálogo';
   document.title = tituloPagina;
+  actualizarFavicon(negocio.logo_url);
+
+  const numeroWa = String(negocio.whatsapp_numero || '').replace(/[^\d]/g,'');
 
   const especies = especiesUnicas();
   const etapas = etapasUnicas();
@@ -407,16 +475,25 @@ function renderPagina(){
       '<div class="portada" style="'+(negocio.portada_url ? 'background-image:linear-gradient(180deg, rgba(15,20,18,.25), rgba(15,20,18,.55)), url(\''+escaparHTML(negocio.portada_url).replace(/'/g,"%27")+'\')' : '')+'">'+
         '<div class="marca-info">'+
           '<div class="marca-info-izq">'+
-            '<div class="marca-logo">'+(negocio.logo_url ? '<img src="'+escaparHTML(negocio.logo_url)+'" alt="">' : '<span class="sin-logo">🐾</span>')+'</div>'+
+            '<div class="marca-logo">'+(negocio.logo_url ? '<img src="'+escaparHTML(negocio.logo_url)+'" alt="">' : '<span class="sin-logo">'+ICN.pata+'</span>')+'</div>'+
             '<h1 class="marca-nombre">'+escaparHTML(negocio.nombre_comercio || 'Catálogo')+'</h1>'+
           '</div>'+
-          '<button class="btn-compartir" id="btnCompartirCatalogo" title="Compartir catálogo" aria-label="Compartir catálogo">🔗</button>'+
+          '<div class="marca-acciones">'+
+            (numeroWa ? '<button class="btn-header-icono btn-header-whatsapp" id="btnWhatsappHeader" title="Escribinos por WhatsApp">'+iconoImg('whatsapp')+'<span class="texto-wa">WhatsApp</span></button>' : '')+
+            '<button class="btn-header-icono" id="btnCompartirCatalogo" title="Compartir catálogo" aria-label="Compartir catálogo">'+iconoImg('compartir')+'</button>'+
+          '</div>'+
         '</div>'+
       '</div>'+
     '</header>'+
+    '<div class="beneficios"><div class="beneficios-inner">'+
+      '<div class="beneficio-item">'+iconoImg('actualizado')+'<span>Catálogo siempre actualizado</span></div>'+
+      '<div class="beneficio-item">'+iconoImg('etiqueta')+'<span>Ofertas y destacados al día</span></div>'+
+      '<div class="beneficio-item">'+iconoImg('agregar')+'<span>Armá tu lista de productos</span></div>'+
+      '<div class="beneficio-item">'+iconoImg('whatsapp')+'<span>Consultá directo por WhatsApp</span></div>'+
+    '</div></div>'+
     '<div class="barra-filtros"><div class="barra-filtros-inner">'+
       '<div class="fila-buscador-orden">'+
-        '<div class="buscador-wrap"><span class="buscador-icono">🔍</span>'+
+        '<div class="buscador-wrap"><span class="buscador-icono">'+ICN.buscar+'</span>'+
           '<input id="buscador" type="text" placeholder="Buscar producto, marca..." aria-label="Buscar producto o marca">'+
           '<button class="buscador-limpiar" id="btnLimpiarBuscador" aria-label="Limpiar búsqueda">✕</button>'+
         '</div>'+
@@ -434,12 +511,23 @@ function renderPagina(){
       '<div id="resultadoInfo" class="resultado-info"></div>'+
       '<div id="grid" class="grid-productos"></div>'+
     '</main>'+
-    '<p class="footer-nota">Catálogo actualizado el '+
-      new Date(CATALOGO.fecha_publicacion).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'})+
-      ' · Los precios pueden variar sin previo aviso.</p>'+
+    '<footer class="pie">'+
+      '<div class="pie-inner">'+
+        '<div class="pie-marca">'+
+          '<div class="pie-logo">'+(negocio.logo_url ? '<img src="'+escaparHTML(negocio.logo_url)+'" alt="">' : '')+'</div>'+
+          '<span class="pie-nombre">'+escaparHTML(negocio.nombre_comercio || 'Catálogo')+'</span>'+
+        '</div>'+
+        '<div class="pie-info">'+
+          '<span>Catálogo actualizado el '+new Date(CATALOGO.fecha_publicacion).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'})+'</span>'+
+          '<span>Los precios pueden variar sin previo aviso</span>'+
+        '</div>'+
+        (numeroWa ? '<a class="pie-whatsapp" href="https://wa.me/'+numeroWa+'" target="_blank" rel="noopener">'+iconoImg('whatsapp')+' Escribinos por WhatsApp</a>' : '')+
+      '</div>'+
+      '<div class="pie-plataforma">Catálogo creado con JPSistema</div>'+
+    '</footer>'+
     '<div id="barraConsulta" class="barra-consulta">'+
-      '<button id="btnVerLista" class="barra-consulta-texto" style="background:none;color:#fff;text-align:left"><strong id="contadorConsulta">0</strong> en tu lista — ver</button>'+
-      '<button id="btnEnviarConsulta">🐾 Enviar consulta</button>'+
+      '<span class="barra-consulta-texto" id="btnVerLista" role="button" tabindex="0">'+iconoImg('lista')+'<strong id="contadorConsulta">0</strong> en tu lista — ver</span>'+
+      '<button id="btnEnviarConsulta">'+iconoImg('whatsapp')+'Enviar consulta</button>'+
     '</div>'+
     '<div id="overlayFicha" class="overlay">'+
       '<div class="hoja hoja-ficha" role="dialog" aria-modal="true" aria-labelledby="fichaTituloAria">'+
@@ -455,7 +543,7 @@ function renderPagina(){
         '<h2 style="font-size:1.05rem;margin-bottom:10px">Tu lista de consulta</h2>'+
         '<div id="listaContenido"></div>'+
         '<div class="ficha-botones">'+
-          '<button class="btn btn-primario" id="btnEnviarDesdeLista">Enviar consulta por WhatsApp</button>'+
+          '<button class="btn btn-primario" id="btnEnviarDesdeLista">'+iconoImg('whatsapp')+'Enviar consulta por WhatsApp</button>'+
         '</div>'+
       '</div>'+
     '</div>';
@@ -496,13 +584,21 @@ function renderPagina(){
   document.getElementById('btnCerrarFicha').addEventListener('click', cerrarFicha);
   document.getElementById('overlayFicha').addEventListener('click', function(e){ if(e.target===this) cerrarFicha(); });
   document.getElementById('btnEnviarConsulta').addEventListener('click', function(){ enviarConsultaWhatsapp(); });
-  document.getElementById('btnVerLista').addEventListener('click', abrirLista);
+  const btnVerLista = document.getElementById('btnVerLista');
+  btnVerLista.addEventListener('click', abrirLista);
+  btnVerLista.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); abrirLista(); } });
   document.getElementById('btnCerrarLista').addEventListener('click', cerrarLista);
   document.getElementById('overlayLista').addEventListener('click', function(e){ if(e.target===this) cerrarLista(); });
   document.getElementById('btnEnviarDesdeLista').addEventListener('click', function(){ enviarConsultaWhatsapp(); });
 
-  const btnCompartir = document.getElementById('btnCompartirCatalogo');
-  btnCompartir.addEventListener('click', function(){
+  if(numeroWa){
+    document.getElementById('btnWhatsappHeader').addEventListener('click', function(){
+      const texto = 'Hola! Estoy viendo el catálogo de ' + (negocio.nombre_comercio||'') + ' y tengo una consulta.';
+      window.open('https://wa.me/'+numeroWa+'?text='+encodeURIComponent(texto), '_blank');
+    });
+  }
+
+  document.getElementById('btnCompartirCatalogo').addEventListener('click', function(){
     const datosCompartir = { title: tituloPagina, text: 'Mirá el catálogo de ' + (negocio.nombre_comercio||'este comercio'), url: location.href };
     if(navigator.share){ navigator.share(datosCompartir).catch(function(){}); }
     else if(navigator.clipboard){ navigator.clipboard.writeText(location.href).then(function(){ alert('Enlace copiado.'); }); }
@@ -565,7 +661,7 @@ function limpiarTodosLosFiltros(){
 function renderGrid(){
   const grid = document.getElementById('grid');
   if(!productosActuales.length){
-    grid.innerHTML = '<div class="vacio-grid"><span style="font-size:28px">🐾</span>'+
+    grid.innerHTML = '<div class="vacio-grid">'+iconoImg('buscar').replace('width="16" height="16"','width="34" height="34"')+
       '<span>No encontramos productos con esos filtros. Probá con otra búsqueda.</span>'+
       '<button class="btn btn-fantasma" style="flex:none;padding:0 18px" onclick="limpiarTodosLosFiltros()">Limpiar filtros</button>'+
     '</div>';
@@ -643,11 +739,11 @@ function productosRelacionados(p){
 }
 
 function htmlImagenHero(url, alt){
-  if(!url) return '<span class="sin-imagen">🐾</span>';
+  if(!url) return '<span class="sin-imagen">'+ICN.pata+'</span>';
   return '<span class="spinner spinner-imagen"></span>'+
     '<img class="ficha-hero-img" src="'+escaparHTML(url)+'" alt="'+escaparHTML(alt)+'" loading="lazy" '+
     'onload="var s=this.previousElementSibling;if(s&&s.classList.contains(\'spinner-imagen\'))s.remove();" '+
-    'onerror="var s=this.previousElementSibling;if(s&&s.classList.contains(\'spinner-imagen\'))s.remove();this.replaceWith(Object.assign(document.createElement(\'span\'),{className:\'sin-imagen\',textContent:\'🐾\'}))">';
+    'onerror="var s=this.previousElementSibling;if(s&&s.classList.contains(\'spinner-imagen\'))s.remove();this.replaceWith(Object.assign(document.createElement(\'span\'),{className:\'sin-imagen\',innerHTML:ICN.pata}))">';
 }
 
 function abrirFicha(id){
@@ -689,7 +785,7 @@ function abrirFicha(id){
       '<div class="ficha-precio-fila">'+precioHtml+'</div>'+
       '<div class="ficha-botones">'+
         '<button class="btn btn-fantasma" id="btnFichaAgregar" data-id="'+escaparHTML(id)+'">'+(enLista?'✓ En tu lista':'+ Agregar a mi lista')+'</button>'+
-        '<button class="btn btn-primario" id="btnFichaWhatsapp">Consultar por WhatsApp</button>'+
+        '<button class="btn btn-primario" id="btnFichaWhatsapp">'+iconoImg('whatsapp')+'Consultar por WhatsApp</button>'+
       '</div>'+
       (p.descripcion ? '<div class="ficha-seccion"><h3>Descripción</h3><p>'+escaparHTML(p.descripcion)+'</p></div>' : '')+
       (p.ingredientes ? '<div class="ficha-seccion"><h3>Ingredientes</h3><p>'+escaparHTML(p.ingredientes)+'</p></div>' : '')+
