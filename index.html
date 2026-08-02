@@ -257,6 +257,7 @@ let filtroSoloDestacados = false;
 let ordenActual = 'relevancia';
 let claveAlmacenamiento = '';
 let ultimoFocoAntesDeOverlay = null;
+let MOSTRAR_PRECIOS = true; // se resuelve con negocio.mostrar_precios al cargar
 
 // ── Set de íconos SVG en línea (currentColor → heredan el color del
 // texto/botón). Reemplazan los emojis: se ven iguales en cualquier
@@ -315,11 +316,13 @@ function imagenConFallback(url, alt){
 // en los dos lugares sin código repetido.
 function htmlTarjetaProducto(p){
   const enLista = listaConsulta.has(p.producto_id);
-  let precioHtml;
-  if(p.oferta && p.precio_oferta){
-    precioHtml = '<span class="precio-oferta">$'+monto(p.precio_oferta)+'</span><span class="tachado">$'+monto(p.precio)+'</span>';
-  } else {
-    precioHtml = '$'+monto(p.precio);
+  let precioHtml = '';
+  if(MOSTRAR_PRECIOS){
+    if(p.oferta && p.precio_oferta){
+      precioHtml = '<span class="precio-oferta">$'+monto(p.precio_oferta)+'</span><span class="tachado">$'+monto(p.precio)+'</span>';
+    } else {
+      precioHtml = '$'+monto(p.precio);
+    }
   }
   const etapa = etapaDe(p);
   const etiquetas = [p.especie_nombre || '', etapa || ''].filter(Boolean);
@@ -334,7 +337,7 @@ function htmlTarjetaProducto(p){
       (etiquetas.length ? '<div class="card-etiquetas">'+etiquetas.map(function(t){ return '<span class="etiqueta">'+escaparHTML(t)+'</span>'; }).join('')+'</div>' : '')+
       '<div class="card-nombre">'+escaparHTML(formatearNombreProducto(p.nombre))+'</div>'+
       (p.estrella ? '<div class="card-estrellas">'+estrellasTexto(p.estrella)+'</div>' : '')+
-      '<div class="card-precio">'+precioHtml+'</div>'+
+      (precioHtml ? '<div class="card-precio">'+precioHtml+'</div>' : '')+
     '</button>'+
     '<button class="card-btn-agregar'+(enLista?' en-lista':'')+'" data-id="'+escaparHTML(p.producto_id)+'">'+
       (enLista ? '✓ En tu lista' : '+ Agregar a la lista')+
@@ -383,6 +386,145 @@ function guardarListaEnStorage(){
   try{ localStorage.setItem(claveAlmacenamiento, JSON.stringify(Array.from(listaConsulta.keys()))); }catch(e){}
 }
 
+// ══════════════════════════════════════════════════════════════════════
+// Adaptación al modelo de 4 JSON (Fase A del backend) ──
+//
+// Este frontend fue armado originalmente contra un único endpoint que
+// devolvía { negocio, productos, fecha_publicacion } con precio ya
+// mezclado adentro de cada producto. El backend ahora publica 4 archivos
+// independientes (catalogo.json / precios.json / stock.json /
+// negocio.json) para poder actualizar cada uno por separado sin tener
+// que re-publicar todo. En vez de reescribir toda la UI de abajo (que ya
+// funciona y está pulida), esta capa de acá arriba:
+//   1) A partir de la URL de "catalogo" (la que llega por ?api= o por el
+//      directorio), arma las otras 3 URLs cambiando el parámetro
+//      ?recurso=.
+//   2) Pide los 4 JSON en paralelo (stock solo si negocio.mostrar_stock
+//      está activo — no tiene sentido pedirlo si no se va a usar).
+//   3) "Traduce" los nombres de campo del backend nuevo (id, marca,
+//      especie, imagen, galeria, estrellas) a los que ya espera el resto
+//      del archivo (producto_id, marca_nombre, especie_nombre,
+//      imagen_url, galeria_imagenes, estrella) — tolera además que ya
+//      vengan con el nombre nuevo O el viejo, así no importa si el
+//      backend cambia de un lado u otro.
+//   4) Mezcla el precio de precios.json y (si corresponde) el stock de
+//      stock.json adentro de cada producto, y arma el mismo objeto
+//      CATALOGO = { negocio, productos, fecha_publicacion } que ya usaba
+//      el resto del código — de acá para abajo no cambia nada más.
+// ══════════════════════════════════════════════════════════════════════
+
+function construirUrlRecurso(urlBase, recurso){
+  try{
+    const u = new URL(urlBase, location.href);
+    u.searchParams.set('recurso', recurso);
+    return u.toString();
+  }catch(e){
+    // Fallback de texto por si la URL viniera en un formato que new URL()
+    // no acepta (no debería pasar con las URLs que arma Apps Script).
+    if(urlBase.indexOf('recurso=') !== -1) return urlBase.replace(/recurso=[^&]*/, 'recurso='+recurso);
+    return urlBase + (urlBase.indexOf('?')!==-1 ? '&' : '?') + 'recurso=' + recurso;
+  }
+}
+
+async function fetchJSON(url){
+  const res = await fetch(url, { cache: 'no-store' });
+  return res.json();
+}
+
+function normalizarProducto(p){
+  const id = p.producto_id || p.id;
+  return {
+    producto_id: id,
+    sku: p.sku || '',
+    nombre: p.nombre || '',
+    marca_nombre: p.marca_nombre || p.marca || '',
+    especie_id: p.especie_id || '',
+    especie_nombre: p.especie_nombre || p.especie || '',
+    categoria_id: p.categoria_id || '',
+    categoria_nombre: p.categoria_nombre || p.categoria || '',
+    ali_edad_etaria: p.ali_edad_etaria || p.etapa || '',
+    edad_etaria_canonica: p.edad_etaria_canonica || p.etapa || '',
+    ali_peso_kg: p.ali_peso_kg || p.peso || '',
+    imagen_url: p.imagen_url || p.imagen || '',
+    galeria_imagenes: p.galeria_imagenes || p.galeria || [],
+    oferta: !!p.oferta,
+    precio_oferta: Number(p.precio_oferta || 0),
+    destacado: !!p.destacado,
+    estrella: p.estrella !== undefined ? p.estrella : p.estrellas,
+    descripcion: p.descripcion || '',
+    ingredientes: p.ingredientes || '',
+    info_nutricional: p.info_nutricional || '',
+    etiquetas: p.etiquetas || [],
+    precio: 0,             // se completa con precios.json más abajo
+    stock_disponible: null, // se completa con stock.json si corresponde
+  };
+}
+
+function normalizarNegocio(n){
+  n = n || {};
+  return {
+    nombre_comercio: n.nombre || n.nombre_comercio || '',
+    logo_url: n.logo || n.logo_url || '',
+    portada_url: n.portada || n.portada_url || '',
+    color_marca: n.color || n.color_marca || '#2D6A4F',
+    whatsapp_numero: n.whatsapp || n.whatsapp_numero || '',
+    instagram: n.instagram || '',
+    facebook: n.facebook || '',
+    tiktok: n.tiktok || '',
+    sitio_web: n.sitio_web || '',
+    mostrar_precios: n.mostrar_precios !== undefined ? !!n.mostrar_precios : true,
+    mostrar_stock: !!n.mostrar_stock,
+    acepta_pedidos: !!n.acepta_pedidos,
+    acepta_pagos: !!n.acepta_pagos,
+    alias_pago: n.alias_pago || '',
+    cbu: n.cbu || '',
+    titular_pago: n.titular_pago || '',
+    banco_pago: n.banco_pago || '',
+    qr_url: n.qr_url || '',
+    mensaje_whatsapp: n.mensaje_whatsapp || '',
+    fecha_publicacion: n.fecha_ultima_publicacion || n.fecha_publicacion || '',
+  };
+}
+
+async function cargarCatalogoDesde4Json(urlCatalogo){
+  const urlPrecios = construirUrlRecurso(urlCatalogo, 'precios');
+  const urlNegocio = construirUrlRecurso(urlCatalogo, 'negocio');
+
+  const [resCatalogo, resPrecios, resNegocio] = await Promise.all([
+    fetchJSON(urlCatalogo),
+    fetchJSON(urlPrecios).catch(function(){ return null; }),
+    fetchJSON(urlNegocio).catch(function(){ return null; }),
+  ]);
+
+  if(!resCatalogo || !resCatalogo.success){
+    return { success:false, error: (resCatalogo && resCatalogo.error) || 'No se pudo cargar el catálogo.' };
+  }
+
+  const negocio = normalizarNegocio((resNegocio && resNegocio.success) ? resNegocio.data : null);
+  const mapaPrecios = (resPrecios && resPrecios.success) ? (resPrecios.data || {}) : {};
+
+  const productos = (resCatalogo.data || []).map(normalizarProducto);
+  productos.forEach(function(p){ p.precio = Number(mapaPrecios[p.producto_id] || 0); });
+
+  // stock.json: solo se pide si el negocio lo tiene activado — no tiene
+  // sentido bajar un cuarto archivo si no se va a mostrar nada con eso.
+  if(negocio.mostrar_stock){
+    try{
+      const urlStock = construirUrlRecurso(urlCatalogo, 'stock');
+      const resStock = await fetchJSON(urlStock);
+      if(resStock && resStock.success){
+        const mapaStock = resStock.data || {};
+        productos.forEach(function(p){ p.stock_disponible = mapaStock[p.producto_id]; });
+      }
+    }catch(e){ /* no crítico: el catálogo sigue andando sin stock */ }
+  }
+
+  return {
+    success: true,
+    data: { negocio: negocio, productos: productos, fecha_publicacion: negocio.fecha_publicacion },
+  };
+}
+
 async function iniciar(){
   if(!API_URL && !CLIENTE_SLUG){
     pintarEstado('enlace','Falta identificar el comercio','Esta página necesita saber de qué comercio es el catálogo (parámetro cliente o api en la dirección).');
@@ -406,13 +548,13 @@ async function iniciar(){
   }
 
   try{
-    const res = await fetch(API_URL, { cache: 'no-store' });
-    const json = await res.json();
-    if(!json || !json.success){
-      pintarEstado('caja','Este catálogo todavía no está disponible', (json && json.error) || 'Volvé a intentarlo más tarde.', true);
+    const resultado = await cargarCatalogoDesde4Json(API_URL);
+    if(!resultado.success){
+      pintarEstado('caja','Este catálogo todavía no está disponible', resultado.error || 'Volvé a intentarlo más tarde.', true);
       return;
     }
-    CATALOGO = json.data;
+    CATALOGO = resultado.data;
+    MOSTRAR_PRECIOS = CATALOGO.negocio.mostrar_precios !== false;
     claveAlmacenamiento = 'lista_consulta:' + API_URL;
     cargarListaGuardada();
     renderPagina();
@@ -499,8 +641,7 @@ function renderPagina(){
         '</div>'+
         '<select id="ordenSelect" class="orden-select" aria-label="Ordenar por">'+
           '<option value="relevancia">Relevancia</option>'+
-          '<option value="precio_asc">Precio ↑</option>'+
-          '<option value="precio_desc">Precio ↓</option>'+
+          (MOSTRAR_PRECIOS ? '<option value="precio_asc">Precio ↑</option><option value="precio_desc">Precio ↓</option>' : '')+
           '<option value="mejor_valorados">Mejor valorados</option>'+
         '</select>'+
       '</div>'+
@@ -753,11 +894,13 @@ function abrirFicha(id){
   const enLista = listaConsulta.has(id);
   const relacionados = productosRelacionados(p);
 
-  let precioHtml;
-  if(p.oferta && p.precio_oferta){
-    precioHtml = '<span class="ficha-precio precio-oferta">$'+monto(p.precio_oferta)+'</span><span class="ficha-precio tachado">$'+monto(p.precio)+'</span>';
-  } else {
-    precioHtml = '<span class="ficha-precio">$'+monto(p.precio)+'</span>';
+  let precioHtml = '';
+  if(MOSTRAR_PRECIOS){
+    if(p.oferta && p.precio_oferta){
+      precioHtml = '<span class="ficha-precio precio-oferta">$'+monto(p.precio_oferta)+'</span><span class="ficha-precio tachado">$'+monto(p.precio)+'</span>';
+    } else {
+      precioHtml = '<span class="ficha-precio">$'+monto(p.precio)+'</span>';
+    }
   }
 
   const badgesHero = (p.oferta ? '<span class="badge badge-oferta">Oferta</span>' : '') +
@@ -782,7 +925,7 @@ function abrirFicha(id){
       '<div class="ficha-marca">'+escaparHTML(p.marca_nombre)+'</div>'+
       '<h2 id="fichaTituloAria" class="ficha-nombre">'+escaparHTML(formatearNombreProducto(p.nombre))+'</h2>'+
       (p.estrella ? '<div class="ficha-estrellas">'+estrellasTexto(p.estrella)+'</div>' : '')+
-      '<div class="ficha-precio-fila">'+precioHtml+'</div>'+
+      (precioHtml ? '<div class="ficha-precio-fila">'+precioHtml+'</div>' : '')+
       '<div class="ficha-botones">'+
         '<button class="btn btn-fantasma" id="btnFichaAgregar" data-id="'+escaparHTML(id)+'">'+(enLista?'✓ En tu lista':'+ Agregar a mi lista')+'</button>'+
         '<button class="btn btn-primario" id="btnFichaWhatsapp">'+iconoImg('whatsapp')+'Consultar por WhatsApp</button>'+
@@ -841,7 +984,7 @@ function renderListaContenido(){
       '<div class="card-img">'+imagenConFallback(p.imagen_url, p.nombre)+'</div>'+
       '<div class="lista-item-info">'+
         '<div class="lista-item-nombre">'+escaparHTML(formatearNombreProducto(p.nombre))+'</div>'+
-        '<div class="lista-item-precio">$'+monto(precioEfectivo(p))+'</div>'+
+        (MOSTRAR_PRECIOS ? '<div class="lista-item-precio">$'+monto(precioEfectivo(p))+'</div>' : '')+
       '</div>'+
       '<button class="lista-item-quitar" data-id="'+escaparHTML(p.producto_id)+'" aria-label="Quitar">✕</button>'+
     '</div>';
