@@ -118,7 +118,6 @@ header.marca{background:var(--marca);color:#fff;}
 .badge{padding:2px 8px;border-radius:999px;font-size:.6rem;font-weight:800;text-transform:uppercase;color:#fff;}
 .badge-oferta{background:var(--rojo);font-size:.66rem;padding:4px 10px;}
 .badge-destacado{background:var(--amarillo);color:#2A1F04;}
-.badge-agotado{background:var(--carbon-60);}
 .card-img{position:relative;aspect-ratio:1/1;width:100%;display:flex;align-items:center;justify-content:center;background:#fff;border-radius:var(--radio-sm);overflow:hidden;margin-bottom:8px;}
 .card-img img{width:100%;height:100%;object-fit:contain;}
 .sin-imagen{color:var(--carbon-60);opacity:.3;}
@@ -129,6 +128,8 @@ header.marca{background:var(--marca);color:#fff;}
 .card-precio .precio-oferta{color:var(--rojo);}
 .card-precio .tachado{margin-left:6px;font-size:.72rem;font-weight:600;color:var(--carbon-60);text-decoration:line-through;}
 .card-estrellas{color:var(--amarillo);font-size:.75rem;margin-top:2px;}
+.card-stock{font-size:.66rem;color:var(--carbon-60);margin-top:2px;}
+.card-stock.sin-stock{color:var(--rojo);font-weight:700;}
 .card-btn-agregar{margin-top:8px;padding:7px;border-radius:var(--radio-sm);border:1.5px solid var(--marca);color:var(--marca);font-size:.72rem;font-weight:700;background:#fff;transition:background .12s,color .12s;}
 .card-btn-agregar:hover{background:var(--marca-pale);}
 .card-btn-agregar.en-lista{background:var(--marca);color:#fff;}
@@ -182,6 +183,7 @@ header.marca{background:var(--marca);color:#fff;}
 .ficha-precio.tachado{font-size:.95rem;font-weight:600;color:var(--carbon-60);text-decoration:line-through;}
 .ficha-botones{display:flex;gap:8px;margin:14px 0 4px;}
 .btn{flex:1;height:46px;border-radius:999px;font-weight:700;font-size:.88rem;display:flex;align-items:center;justify-content:center;gap:7px;transition:transform .1s ease, box-shadow .15s ease;}
+.btn:disabled{opacity:.5;pointer-events:none;}
 .btn:active{transform:scale(.97);}
 .btn-primario{background:var(--marca);color:#fff;}
 .btn-primario:hover{box-shadow:var(--sombra-md);}
@@ -197,16 +199,57 @@ header.marca{background:var(--marca);color:#fff;}
 .relacionados-fila{display:flex;gap:12px;overflow-x:auto;padding:4px 2px 10px;scroll-snap-type:x proximity;}
 .relacionados-fila .card{flex:none;width:168px;scroll-snap-align:start;}
 
-/* ── Lista de consulta (mini modal) ── */
+/* ── Lista de consulta / carrito (mini modal) ── */
 .lista-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--borde);}
 .lista-item .card-img{width:46px;height:46px;flex:none;margin:0;aspect-ratio:auto;}
 .lista-item .card-img .sin-imagen svg{width:20px;height:20px;}
 .lista-item-info{flex:1;min-width:0;}
 .lista-item-nombre{font-size:.82rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .lista-item-precio{font-size:.76rem;color:var(--carbon-60);}
+.lista-item-qty{display:flex;align-items:center;gap:6px;flex:none;}
+.qty-btn{width:26px;height:26px;border-radius:50%;background:var(--hueso);color:var(--carbon);font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:background .12s;}
+.qty-btn:hover{background:var(--marca-pale);color:var(--marca);}
+.qty-valor{min-width:18px;text-align:center;font-size:.82rem;font-weight:700;}
 .lista-item-quitar{flex:none;width:30px;height:30px;border-radius:50%;background:var(--hueso);color:var(--carbon-60);font-size:14px;transition:background .12s,color .12s;}
 .lista-item-quitar:hover{background:#ffe5e7;color:var(--rojo);}
 .lista-vacia{padding:24px 0;text-align:center;color:var(--carbon-60);font-size:.85rem;}
+.lista-total-fila{display:none;align-items:center;justify-content:space-between;padding:12px 0 4px;margin-top:6px;border-top:1px solid var(--borde);font-size:.95rem;}
+.lista-total-fila strong{font-size:1.1rem;}
+
+/* ── Checkout: datos del cliente, método de pago, comprobante ── */
+.checkout-resumen{background:var(--hueso);border-radius:var(--radio-sm);padding:10px 12px;margin-bottom:16px;}
+.checkout-resumen-fila{display:flex;justify-content:space-between;gap:10px;font-size:.8rem;color:var(--carbon-60);padding:3px 0;}
+.checkout-resumen-total{margin-top:6px;padding-top:8px;border-top:1px solid var(--borde);font-weight:800;color:var(--carbon);font-size:.9rem;}
+.checkout-label{display:block;margin:12px 0 6px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:var(--carbon-60);}
+.checkout-input,.checkout-textarea,.checkout-file{width:100%;padding:0 12px;border:1.5px solid var(--borde);border-radius:var(--radio-sm);font-size:.88rem;background:#fff;}
+.checkout-input{height:42px;}
+.checkout-textarea{min-height:64px;padding-top:10px;resize:vertical;}
+.checkout-input:focus,.checkout-textarea:focus{border-color:var(--marca);outline:none;}
+.checkout-file{height:auto;padding:8px 10px;font-size:.8rem;}
+.metodo-pago-opciones{display:flex;gap:8px;}
+.metodo-pago-opcion{flex:1;padding:10px 8px;border:1.5px solid var(--borde);border-radius:var(--radio-sm);background:#fff;font-size:.8rem;font-weight:700;color:var(--carbon-60);text-align:center;}
+.metodo-pago-opcion.activa{border-color:var(--marca);background:var(--marca-pale);color:var(--marca-oscura);}
+.datos-transferencia{display:none;margin-top:12px;padding:12px;background:var(--hueso);border-radius:var(--radio-sm);}
+.datos-transferencia.visible{display:block;}
+.datos-pago-tabla{margin-bottom:10px;}
+.datos-pago-fila{display:flex;justify-content:space-between;gap:10px;font-size:.8rem;padding:4px 0;border-bottom:1px solid var(--borde);}
+.datos-pago-fila:last-child{border-bottom:none;}
+.datos-pago-fila span{color:var(--carbon-60);}
+.datos-pago-qr{display:flex;justify-content:center;margin-bottom:10px;}
+.datos-pago-qr img{width:140px;height:140px;object-fit:contain;background:#fff;border-radius:var(--radio-sm);}
+.comprobante-preview{display:flex;margin-top:8px;}
+.comprobante-preview:empty{display:none;}
+.comprobante-preview img{width:80px;height:80px;object-fit:cover;border-radius:var(--radio-sm);}
+.comprobante-preview{position:relative;width:80px;}
+.comprobante-preview button{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;background:var(--carbon);color:#fff;font-size:11px;}
+.checkout-confirmacion{text-align:center;padding:20px 10px 8px;}
+.checkout-confirmacion-icono{width:52px;height:52px;border-radius:50%;background:var(--marca-pale);color:var(--marca);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;}
+.checkout-confirmacion-icono svg{width:24px;height:24px;}
+.checkout-confirmacion p{color:var(--carbon-60);font-size:.85rem;margin:8px 0 18px;}
+.msg{display:none;margin-top:8px;font-size:.78rem;}
+.msg.ok,.msg.error{display:block;}
+.msg.ok{color:var(--marca);}
+.msg.error{color:var(--rojo);}
 
 /* ── Barra flotante de consulta (signature: no es un "carrito") ── */
 .barra-consulta{position:fixed;left:16px;right:16px;bottom:16px;z-index:60;max-width:520px;margin:0 auto;background:var(--carbon);color:#fff;border-radius:999px;padding:8px 8px 8px 4px;display:none;align-items:center;justify-content:space-between;gap:6px;box-shadow:var(--sombra-lg);transform:translateY(120%);transition:transform .25s cubic-bezier(.32,.72,0,1);}
@@ -225,6 +268,9 @@ header.marca{background:var(--marca);color:#fff;}
 .pie-logo img{width:100%;height:100%;object-fit:cover;}
 .pie-nombre{font-family:'Big Shoulders',sans-serif;font-weight:700;font-size:.95rem;text-transform:uppercase;letter-spacing:.3px;}
 .pie-info{font-size:.72rem;color:var(--carbon-60);display:flex;flex-direction:column;gap:2px;}
+.pie-redes{display:flex;gap:10px;}
+.pie-redes a{width:34px;height:34px;border-radius:50%;background:var(--hueso);color:var(--carbon-60);display:flex;align-items:center;justify-content:center;transition:background .12s,color .12s;}
+.pie-redes a:hover{background:var(--marca-pale);color:var(--marca);}
 .pie-whatsapp{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:700;color:var(--marca);}
 .pie-plataforma{text-align:center;padding:10px 16px 18px;font-size:.66rem;color:var(--carbon-60);opacity:.7;}
 </style>
@@ -250,7 +296,10 @@ const CLIENTE_SLUG = params.get('cliente') || '';
 
 let CATALOGO = null;
 let productosActuales = [];
-let listaConsulta = new Map(); // producto_id -> producto
+let carrito = new Map(); // producto_id -> { producto, cantidad }
+let metodoPagoElegido = 'efectivo'; // 'efectivo' | 'transferencia'
+let comprobanteBase64 = null;
+let comprobanteMimeType = '';
 let filtroTexto = '';
 let filtroEspecie = '';
 let filtroEtapa = '';
@@ -258,7 +307,6 @@ let filtroSoloDestacados = false;
 let ordenActual = 'relevancia';
 let claveAlmacenamiento = '';
 let ultimoFocoAntesDeOverlay = null;
-let MOSTRAR_PRECIOS = true; // se resuelve con negocio.mostrar_precios al cargar
 
 // ── Set de íconos SVG en línea (currentColor → heredan el color del
 // texto/botón). Reemplazan los emojis: se ven iguales en cualquier
@@ -275,6 +323,10 @@ const ICN = {
   alerta: '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86 1.82 18a1.5 1.5 0 0 0 1.3 2.25h17.76A1.5 1.5 0 0 0 22.18 18L13.71 3.86a1.5 1.5 0 0 0-2.42 0Z"/></svg>',
   caja: '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 8 9-5 9 5-9 5-9-5Z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>',
   enlace: '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17H7a5 5 0 0 1 0-10h2"/><path d="M15 7h2a5 5 0 1 1 0 10h-2"/><line x1="8" y1="12" x2="16" y2="12"/></svg>',
+  instagram: '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>',
+  facebook: '<svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M13.5 21v-8h2.7l.4-3.1h-3.1V8c0-.9.25-1.5 1.55-1.5H16.7V3.7C16.4 3.66 15.4 3.57 14.24 3.57c-2.42 0-4.08 1.48-4.08 4.2v2.13H7.44v3.1h2.72V21h3.34Z"/></svg>',
+  tiktok: '<svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M16.6 2h-3.1v13.7a2.9 2.9 0 1 1-2.05-2.77v-3.2a6.1 6.1 0 1 0 5.15 6.03V8.9a7.1 7.1 0 0 0 4.1 1.3V7.1a4 4 0 0 1-4.1-3.9V2Z"/></svg>',
+  sitio: '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18Z"/></svg>',
 };
 function iconoImg(nombre, extra){ return '<span class="icono'+(extra?(' '+extra):'')+'">'+ICN[nombre]+'</span>'; }
 
@@ -302,11 +354,19 @@ function formatearNombreProducto(nombre){
 }
 function precioEfectivo(p){ return (p.oferta && p.precio_oferta) ? p.precio_oferta : p.precio; }
 function etapaDe(p){ return p.edad_etaria_canonica || p.ali_edad_etaria || ''; }
-// stock_disponible es null/undefined cuando no se pidió stock.json (no
-// hace falta filtrar/ordenar por eso) — en ese caso NO se considera
-// agotado, para no ocultar productos por falta de dato.
-function estaAgotado(p){ return p.stock_disponible !== null && p.stock_disponible !== undefined && Number(p.stock_disponible) <= 0; }
-function puedeConsultarse(p){ return !estaAgotado(p) || CATALOGO.negocio.permitir_consultar_sin_stock; }
+
+// Instagram/TikTok se cargan a veces como "@usuario" en vez de URL — esto
+// arma el link correcto en cualquiera de los dos casos.
+function normalizarLinkRed_(valor, red){
+  const v = String(valor||'').trim();
+  if(/^https?:\/\//i.test(v)) return v;
+  const usuario = v.replace(/^@/, '');
+  return red === 'instagram' ? 'https://instagram.com/'+usuario : 'https://tiktok.com/@'+usuario;
+}
+function normalizarLinkExterno_(valor){
+  const v = String(valor||'').trim();
+  return /^https?:\/\//i.test(v) ? v : 'https://'+v;
+}
 
 function imagenConFallback(url, alt){
   if(!url) return '<span class="sin-imagen">'+ICN.pata+'</span>';
@@ -321,32 +381,26 @@ function imagenConFallback(url, alt){
 // exactamente iguales y el click (abrir / agregar a la lista) funcione
 // en los dos lugares sin código repetido.
 function htmlTarjetaProducto(p){
-  const enLista = listaConsulta.has(p.producto_id);
-  const agotado = estaAgotado(p);
-  const puedeConsultar = puedeConsultarse(p);
+  const enLista = carrito.has(p.producto_id);
+  const mostrarPrecio = !CATALOGO.negocio || CATALOGO.negocio.mostrar_precios !== false;
   let precioHtml = '';
-  if(MOSTRAR_PRECIOS){
+  if(mostrarPrecio){
     if(p.oferta && p.precio_oferta){
       precioHtml = '<span class="precio-oferta">$'+monto(p.precio_oferta)+'</span><span class="tachado">$'+monto(p.precio)+'</span>';
     } else {
       precioHtml = '$'+monto(p.precio);
     }
   }
-  const etapa = etapaDe(p);
-  const etiquetas = [p.especie_nombre || '', etapa || ''].filter(Boolean);
-
-  let botonHtml;
-  if(agotado && !puedeConsultar){
-    botonHtml = '<button class="card-btn-agregar" disabled style="opacity:.5;cursor:default">Sin stock</button>';
-  } else {
-    botonHtml = '<button class="card-btn-agregar'+(enLista?' en-lista':'')+'" data-id="'+escaparHTML(p.producto_id)+'">'+
-      (enLista ? '✓ En tu lista' : (agotado ? '+ Consultar disponibilidad' : '+ Agregar a la lista'))+
-    '</button>';
+  let stockHtml = '';
+  if(p.stock != null){
+    stockHtml = p.stock > 0
+      ? '<div class="card-stock">Stock: '+p.stock+'</div>'
+      : '<div class="card-stock sin-stock">Sin stock</div>';
   }
-
+  const etapa = etapaDe(p);
+  const etiquetas = [p.especie_nombre || '', etapa || ''].concat(p.etiquetas_producto || []).filter(Boolean);
   return '<article class="card" data-id="'+escaparHTML(p.producto_id)+'">'+
     '<div class="card-badges">'+
-      (agotado ? '<span class="badge badge-agotado">Sin stock</span>' : '')+
       (p.oferta ? '<span class="badge badge-oferta">Oferta</span>' : '')+
       (p.destacado ? '<span class="badge badge-destacado">★ Destacado</span>' : '')+
     '</div>'+
@@ -356,9 +410,12 @@ function htmlTarjetaProducto(p){
       (etiquetas.length ? '<div class="card-etiquetas">'+etiquetas.map(function(t){ return '<span class="etiqueta">'+escaparHTML(t)+'</span>'; }).join('')+'</div>' : '')+
       '<div class="card-nombre">'+escaparHTML(formatearNombreProducto(p.nombre))+'</div>'+
       (p.estrella ? '<div class="card-estrellas">'+estrellasTexto(p.estrella)+'</div>' : '')+
-      (precioHtml ? '<div class="card-precio">'+precioHtml+'</div>' : '')+
+      (mostrarPrecio ? '<div class="card-precio">'+precioHtml+'</div>' : '')+
+      stockHtml+
     '</button>'+
-    botonHtml+
+    '<button class="card-btn-agregar'+(enLista?' en-lista':'')+'" data-id="'+escaparHTML(p.producto_id)+'">'+
+      (enLista ? '✓ En tu lista' : '+ Agregar a la lista')+
+    '</button>'+
   '</article>';
 }
 
@@ -385,174 +442,80 @@ function actualizarFavicon(url){
   link.href = url;
 }
 
-// ── Persistencia de la lista de consulta (localStorage, por catálogo) ──
+// ── Persistencia del carrito (localStorage, por catálogo) ──
 function cargarListaGuardada(){
   if(!claveAlmacenamiento) return;
   try{
     const raw = localStorage.getItem(claveAlmacenamiento);
     if(!raw) return;
-    const ids = JSON.parse(raw);
-    (ids||[]).forEach(function(id){
-      const p = CATALOGO.productos.find(function(x){ return x.producto_id===id; });
-      if(p) listaConsulta.set(id, p);
+    const guardado = JSON.parse(raw);
+    // Formato viejo (antes del carrito con cantidades) era un array de
+    // ids solamente — lo seguimos leyendo para no perder el carrito de
+    // alguien que ya lo tenía guardado, asumiendo cantidad 1.
+    const entradas = Array.isArray(guardado)
+      ? guardado.map(function(id){ return [id, 1]; })
+      : Object.entries(guardado || {});
+    entradas.forEach(function(par){
+      const p = CATALOGO.productos.find(function(x){ return x.producto_id===par[0]; });
+      if(p) carrito.set(par[0], { producto: p, cantidad: Math.max(1, Number(par[1])||1) });
     });
-  }catch(e){ /* si está corrupto, arrancamos con la lista vacía */ }
+  }catch(e){ /* si está corrupto, arrancamos con el carrito vacío */ }
 }
 function guardarListaEnStorage(){
   if(!claveAlmacenamiento) return;
-  try{ localStorage.setItem(claveAlmacenamiento, JSON.stringify(Array.from(listaConsulta.keys()))); }catch(e){}
-}
-
-// ══════════════════════════════════════════════════════════════════════
-// Adaptación al modelo de 4 JSON (Fase A del backend) ──
-//
-// Este frontend fue armado originalmente contra un único endpoint que
-// devolvía { negocio, productos, fecha_publicacion } con precio ya
-// mezclado adentro de cada producto. El backend ahora publica 4 archivos
-// independientes (catalogo.json / precios.json / stock.json /
-// negocio.json) para poder actualizar cada uno por separado sin tener
-// que re-publicar todo. En vez de reescribir toda la UI de abajo (que ya
-// funciona y está pulida), esta capa de acá arriba:
-//   1) A partir de la URL de "catalogo" (la que llega por ?api= o por el
-//      directorio), arma las otras 3 URLs cambiando el parámetro
-//      ?recurso=.
-//   2) Pide los 4 JSON en paralelo (stock solo si negocio.mostrar_stock
-//      está activo — no tiene sentido pedirlo si no se va a usar).
-//   3) "Traduce" los nombres de campo del backend nuevo (id, marca,
-//      especie, imagen, galeria, estrellas) a los que ya espera el resto
-//      del archivo (producto_id, marca_nombre, especie_nombre,
-//      imagen_url, galeria_imagenes, estrella) — tolera además que ya
-//      vengan con el nombre nuevo O el viejo, así no importa si el
-//      backend cambia de un lado u otro.
-//   4) Mezcla el precio de precios.json y (si corresponde) el stock de
-//      stock.json adentro de cada producto, y arma el mismo objeto
-//      CATALOGO = { negocio, productos, fecha_publicacion } que ya usaba
-//      el resto del código — de acá para abajo no cambia nada más.
-// ══════════════════════════════════════════════════════════════════════
-
-function construirUrlRecurso(urlBase, recurso){
   try{
-    const u = new URL(urlBase, location.href);
-    u.searchParams.set('recurso', recurso);
-    return u.toString();
-  }catch(e){
-    // Fallback de texto por si la URL viniera en un formato que new URL()
-    // no acepta (no debería pasar con las URLs que arma Apps Script).
-    if(urlBase.indexOf('recurso=') !== -1) return urlBase.replace(/recurso=[^&]*/, 'recurso='+recurso);
-    return urlBase + (urlBase.indexOf('?')!==-1 ? '&' : '?') + 'recurso=' + recurso;
-  }
+    const plano = {};
+    carrito.forEach(function(entrada, id){ plano[id] = entrada.cantidad; });
+    localStorage.setItem(claveAlmacenamiento, JSON.stringify(plano));
+  }catch(e){}
 }
 
-async function fetchJSON(url){
-  const res = await fetch(url, { cache: 'no-store' });
-  return res.json();
-}
-
-function normalizarProducto(p){
-  const id = p.producto_id || p.id;
+// Convierte un producto tal como viene de catalogo.json (nombres de
+// campo nuevos: id, marca, categoria, especie, etapa, imagen, galeria,
+// estrellas, peso) a la forma interna que ya usa el resto de este
+// archivo (producto_id, marca_nombre, etc.) — así el resto del código
+// (filtros, tarjetas, ficha, relacionados) no tiene que tocarse.
+function normalizarProductoCatalogo_(p){
   return {
-    producto_id: id,
+    producto_id: String(p.id),
     sku: p.sku || '',
     nombre: p.nombre || '',
-    marca_nombre: p.marca_nombre || p.marca || '',
+    marca_nombre: p.marca || '',
     especie_id: p.especie_id || '',
-    especie_nombre: p.especie_nombre || p.especie || '',
+    especie_nombre: p.especie || '',
     categoria_id: p.categoria_id || '',
-    categoria_nombre: p.categoria_nombre || p.categoria || '',
-    ali_edad_etaria: p.ali_edad_etaria || p.etapa || '',
-    edad_etaria_canonica: p.edad_etaria_canonica || p.etapa || '',
-    ali_peso_kg: p.ali_peso_kg || p.peso || '',
-    imagen_url: p.imagen_url || p.imagen || '',
-    galeria_imagenes: p.galeria_imagenes || p.galeria || [],
-    oferta: !!p.oferta,
-    precio_oferta: Number(p.precio_oferta || 0),
-    destacado: !!p.destacado,
-    estrella: p.estrella !== undefined ? p.estrella : p.estrellas,
+    categoria_nombre: p.categoria || '',
+    edad_etaria_canonica: p.etapa || '',
+    ali_edad_etaria: p.etapa || '',
+    ali_peso_kg: p.peso || '',
+    imagen_url: p.imagen || '',
+    galeria_imagenes: p.galeria || [],
     descripcion: p.descripcion || '',
     ingredientes: p.ingredientes || '',
     info_nutricional: p.info_nutricional || '',
-    etiquetas: p.etiquetas || [],
-    precio: 0,             // se completa con precios.json más abajo
-    stock_disponible: null, // se completa con stock.json si corresponde
+    destacado: !!p.destacado,
+    oferta: !!p.oferta,
+    precio_oferta: Number(p.precio_oferta || 0),
+    estrella: p.estrellas != null ? Number(p.estrellas) : null,
+    etiquetas_producto: p.etiquetas || [],
+    precio: 0,   // se completa con precios.json
+    stock: null, // se completa con stock.json (null = no mostrar)
   };
 }
 
-function normalizarNegocio(n){
-  n = n || {};
-  return {
-    nombre_comercio: n.nombre || n.nombre_comercio || '',
-    logo_url: n.logo || n.logo_url || '',
-    portada_url: n.portada || n.portada_url || '',
-    color_marca: n.color || n.color_marca || '#2D6A4F',
-    whatsapp_numero: n.whatsapp || n.whatsapp_numero || '',
-    instagram: n.instagram || '',
-    facebook: n.facebook || '',
-    tiktok: n.tiktok || '',
-    sitio_web: n.sitio_web || '',
-    mostrar_precios: n.mostrar_precios !== undefined ? !!n.mostrar_precios : true,
-    mostrar_stock: !!n.mostrar_stock,
-    mostrar_sin_precio: n.mostrar_sin_precio !== undefined ? !!n.mostrar_sin_precio : true,
-    mostrar_sin_stock: n.mostrar_sin_stock !== undefined ? !!n.mostrar_sin_stock : true,
-    permitir_consultar_sin_stock: n.permitir_consultar_sin_stock !== undefined ? !!n.permitir_consultar_sin_stock : true,
-    acepta_pedidos: !!n.acepta_pedidos,
-    acepta_pagos: !!n.acepta_pagos,
-    alias_pago: n.alias_pago || '',
-    cbu: n.cbu || '',
-    titular_pago: n.titular_pago || '',
-    banco_pago: n.banco_pago || '',
-    qr_url: n.qr_url || '',
-    mensaje_whatsapp: n.mensaje_whatsapp || '',
-    fecha_publicacion: n.fecha_ultima_publicacion || n.fecha_publicacion || '',
-  };
-}
-
-async function cargarCatalogoDesde4Json(urlCatalogo){
-  const urlPrecios = construirUrlRecurso(urlCatalogo, 'precios');
-  const urlNegocio = construirUrlRecurso(urlCatalogo, 'negocio');
-
-  const [resCatalogo, resPrecios, resNegocio] = await Promise.all([
-    fetchJSON(urlCatalogo),
-    fetchJSON(urlPrecios).catch(function(){ return null; }),
-    fetchJSON(urlNegocio).catch(function(){ return null; }),
-  ]);
-
-  if(!resCatalogo || !resCatalogo.success){
-    return { success:false, error: (resCatalogo && resCatalogo.error) || 'No se pudo cargar el catálogo.' };
+// Pide uno de los 4 recursos (?catalogo=1&recurso=X). Nunca tira: si
+// falla o el recurso todavía no fue publicado, devuelve null — así que
+// solo catalogo.json es "obligatorio" para poder mostrar algo; que
+// falten precios/stock/negocio no tira abajo toda la página.
+async function fetchRecurso_(base, recurso){
+  try{
+    const sep = base.indexOf('?') === -1 ? '?' : '&';
+    const res = await fetch(base + sep + 'catalogo=1&recurso=' + recurso, { cache: 'no-store' });
+    const json = await res.json();
+    return (json && json.success) ? json.data : null;
+  }catch(e){
+    return null;
   }
-
-  const negocio = normalizarNegocio((resNegocio && resNegocio.success) ? resNegocio.data : null);
-  const mapaPrecios = (resPrecios && resPrecios.success) ? (resPrecios.data || {}) : {};
-
-  let productos = (resCatalogo.data || []).map(normalizarProducto);
-  productos.forEach(function(p){ p.precio = Number(mapaPrecios[p.producto_id] || 0); });
-
-  if(!negocio.mostrar_sin_precio){
-    productos = productos.filter(function(p){ return p.precio > 0; });
-  }
-
-  // stock.json: se pide si el negocio lo muestra visualmente O si necesita
-  // los datos para filtrar/ordenar (ocultar sin stock, o mandarlos al
-  // final del listado) — no tiene sentido bajar un cuarto archivo si
-  // ninguna de las dos cosas depende de él.
-  if(negocio.mostrar_stock || !negocio.mostrar_sin_stock){
-    try{
-      const urlStock = construirUrlRecurso(urlCatalogo, 'stock');
-      const resStock = await fetchJSON(urlStock);
-      if(resStock && resStock.success){
-        const mapaStock = resStock.data || {};
-        productos.forEach(function(p){ p.stock_disponible = mapaStock[p.producto_id]; });
-      }
-    }catch(e){ /* no crítico: el catálogo sigue andando sin stock */ }
-  }
-
-  if(!negocio.mostrar_sin_stock){
-    productos = productos.filter(function(p){ return !estaAgotado(p); });
-  }
-
-  return {
-    success: true,
-    data: { negocio: negocio, productos: productos, fecha_publicacion: negocio.fecha_publicacion },
-  };
 }
 
 async function iniciar(){
@@ -577,15 +540,46 @@ async function iniciar(){
     }
   }
 
+  // API_URL puede venir con query ya puesta (?catalogo=1, ?catalogo=1&recurso=...,
+  // etc. según de dónde salió) — nos quedamos solo con la base y armamos
+  // nosotros los 4 pedidos, así no importa el shape exacto de lo que
+  // devolvió el directorio central o el ?api= de prueba.
+  const base = API_URL.split('?')[0];
+
   try{
-    const resultado = await cargarCatalogoDesde4Json(API_URL);
-    if(!resultado.success){
-      pintarEstado('caja','Este catálogo todavía no está disponible', resultado.error || 'Volvé a intentarlo más tarde.', true);
+    const [datosCatalogo, datosPrecios, datosStock, datosNegocio] = await Promise.all([
+      fetchRecurso_(base, 'catalogo'),
+      fetchRecurso_(base, 'precios'),
+      fetchRecurso_(base, 'stock'),
+      fetchRecurso_(base, 'negocio'),
+    ]);
+
+    if(!datosCatalogo){
+      pintarEstado('caja','Este catálogo todavía no está disponible','Volvé a intentarlo más tarde.', true);
       return;
     }
-    CATALOGO = resultado.data;
-    MOSTRAR_PRECIOS = CATALOGO.negocio.mostrar_precios !== false;
-    claveAlmacenamiento = 'lista_consulta:' + API_URL;
+
+    const preciosMap = datosPrecios || {};
+    const stockMap = datosStock || {};
+    const negocio = datosNegocio || {};
+    const hayStockPublicado = !!negocio.mostrar_stock && Object.keys(stockMap).length > 0;
+
+    const productos = datosCatalogo.map(function(p){
+      const norm = normalizarProductoCatalogo_(p);
+      norm.precio = Number(preciosMap[norm.producto_id] || 0);
+      norm.stock = (hayStockPublicado && Object.prototype.hasOwnProperty.call(stockMap, norm.producto_id))
+        ? Number(stockMap[norm.producto_id])
+        : null;
+      return norm;
+    });
+
+    CATALOGO = {
+      fecha_publicacion: negocio.fecha_ultima_publicacion || new Date().toISOString(),
+      negocio: negocio,
+      productos: productos,
+    };
+
+    claveAlmacenamiento = 'lista_consulta:' + base;
     cargarListaGuardada();
     renderPagina();
   }catch(e){
@@ -620,13 +614,13 @@ function contarDestacados(){
 
 function renderPagina(){
   const negocio = CATALOGO.negocio || {};
-  const colorMarca = negocio.color_marca || '#2D6A4F';
+  const colorMarca = negocio.color || '#2D6A4F';
   document.documentElement.style.setProperty('--marca', colorMarca);
-  const tituloPagina = negocio.nombre_comercio ? (negocio.nombre_comercio + ' — Catálogo') : 'Catálogo';
+  const tituloPagina = negocio.nombre ? (negocio.nombre + ' — Catálogo') : 'Catálogo';
   document.title = tituloPagina;
-  actualizarFavicon(negocio.logo_url);
+  actualizarFavicon(negocio.logo);
 
-  const numeroWa = String(negocio.whatsapp_numero || '').replace(/[^\d]/g,'');
+  const numeroWa = String(negocio.whatsapp || '').replace(/[^\d]/g,'');
 
   const especies = especiesUnicas();
   const etapas = etapasUnicas();
@@ -644,11 +638,11 @@ function renderPagina(){
 
   document.getElementById('raiz').innerHTML =
     '<header class="marca">'+
-      '<div class="portada" style="'+(negocio.portada_url ? 'background-image:linear-gradient(180deg, rgba(15,20,18,.25), rgba(15,20,18,.55)), url(\''+escaparHTML(negocio.portada_url).replace(/'/g,"%27")+'\')' : '')+'">'+
+      '<div class="portada" style="'+(negocio.portada ? 'background-image:linear-gradient(180deg, rgba(15,20,18,.25), rgba(15,20,18,.55)), url(\''+escaparHTML(negocio.portada).replace(/'/g,"%27")+'\')' : '')+'">'+
         '<div class="marca-info">'+
           '<div class="marca-info-izq">'+
-            '<div class="marca-logo">'+(negocio.logo_url ? '<img src="'+escaparHTML(negocio.logo_url)+'" alt="">' : '<span class="sin-logo">'+ICN.pata+'</span>')+'</div>'+
-            '<h1 class="marca-nombre">'+escaparHTML(negocio.nombre_comercio || 'Catálogo')+'</h1>'+
+            '<div class="marca-logo">'+(negocio.logo ? '<img src="'+escaparHTML(negocio.logo)+'" alt="">' : '<span class="sin-logo">'+ICN.pata+'</span>')+'</div>'+
+            '<h1 class="marca-nombre">'+escaparHTML(negocio.nombre || 'Catálogo')+'</h1>'+
           '</div>'+
           '<div class="marca-acciones">'+
             (numeroWa ? '<button class="btn-header-icono btn-header-whatsapp" id="btnWhatsappHeader" title="Escribinos por WhatsApp">'+iconoImg('whatsapp')+'<span class="texto-wa">WhatsApp</span></button>' : '')+
@@ -671,7 +665,8 @@ function renderPagina(){
         '</div>'+
         '<select id="ordenSelect" class="orden-select" aria-label="Ordenar por">'+
           '<option value="relevancia">Relevancia</option>'+
-          (MOSTRAR_PRECIOS ? '<option value="precio_asc">Precio ↑</option><option value="precio_desc">Precio ↓</option>' : '')+
+          '<option value="precio_asc">Precio ↑</option>'+
+          '<option value="precio_desc">Precio ↓</option>'+
           '<option value="mejor_valorados">Mejor valorados</option>'+
         '</select>'+
       '</div>'+
@@ -685,12 +680,18 @@ function renderPagina(){
     '<footer class="pie">'+
       '<div class="pie-inner">'+
         '<div class="pie-marca">'+
-          '<div class="pie-logo">'+(negocio.logo_url ? '<img src="'+escaparHTML(negocio.logo_url)+'" alt="">' : '')+'</div>'+
-          '<span class="pie-nombre">'+escaparHTML(negocio.nombre_comercio || 'Catálogo')+'</span>'+
+          '<div class="pie-logo">'+(negocio.logo ? '<img src="'+escaparHTML(negocio.logo)+'" alt="">' : '')+'</div>'+
+          '<span class="pie-nombre">'+escaparHTML(negocio.nombre || 'Catálogo')+'</span>'+
         '</div>'+
         '<div class="pie-info">'+
           '<span>Catálogo actualizado el '+new Date(CATALOGO.fecha_publicacion).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'})+'</span>'+
           '<span>Los precios pueden variar sin previo aviso</span>'+
+        '</div>'+
+        '<div class="pie-redes">'+
+          (negocio.sitio_web ? '<a href="'+escaparHTML(normalizarLinkExterno_(negocio.sitio_web))+'" target="_blank" rel="noopener" title="Sitio web" aria-label="Sitio web">'+iconoImg('sitio')+'</a>' : '')+
+          (negocio.instagram ? '<a href="'+escaparHTML(normalizarLinkRed_(negocio.instagram,'instagram'))+'" target="_blank" rel="noopener" title="Instagram" aria-label="Instagram">'+iconoImg('instagram')+'</a>' : '')+
+          (negocio.facebook ? '<a href="'+escaparHTML(normalizarLinkExterno_(negocio.facebook))+'" target="_blank" rel="noopener" title="Facebook" aria-label="Facebook">'+iconoImg('facebook')+'</a>' : '')+
+          (negocio.tiktok ? '<a href="'+escaparHTML(normalizarLinkRed_(negocio.tiktok,'tiktok'))+'" target="_blank" rel="noopener" title="TikTok" aria-label="TikTok">'+iconoImg('tiktok')+'</a>' : '')+
         '</div>'+
         (numeroWa ? '<a class="pie-whatsapp" href="https://wa.me/'+numeroWa+'" target="_blank" rel="noopener">'+iconoImg('whatsapp')+' Escribinos por WhatsApp</a>' : '')+
       '</div>'+
@@ -711,11 +712,22 @@ function renderPagina(){
       '<div class="hoja" role="dialog" aria-modal="true">'+
         '<button class="hoja-cerrar" id="btnCerrarLista" aria-label="Cerrar">✕</button>'+
         '<div class="hoja-agarre"></div>'+
-        '<h2 style="font-size:1.05rem;margin-bottom:10px">Tu lista de consulta</h2>'+
+        '<h2 style="font-size:1.05rem;margin-bottom:10px">Tu carrito</h2>'+
         '<div id="listaContenido"></div>'+
-        '<div class="ficha-botones">'+
-          '<button class="btn btn-primario" id="btnEnviarDesdeLista">'+iconoImg('whatsapp')+'Enviar consulta por WhatsApp</button>'+
+        '<div id="listaTotalFila" class="lista-total-fila">'+
+          '<span>Total</span><strong id="listaTotalValor">$0</strong>'+
         '</div>'+
+        '<div class="ficha-botones">'+
+          '<button class="btn btn-fantasma" id="btnEnviarDesdeLista">'+iconoImg('whatsapp')+'Solo consultar</button>'+
+          (negocio.acepta_pedidos ? '<button class="btn btn-primario" id="btnConfirmarPedido">Confirmar pedido</button>' : '')+
+        '</div>'+
+      '</div>'+
+    '</div>'+
+    '<div id="overlayCheckout" class="overlay">'+
+      '<div class="hoja" role="dialog" aria-modal="true">'+
+        '<button class="hoja-cerrar" id="btnCerrarCheckout" aria-label="Cerrar">✕</button>'+
+        '<div class="hoja-agarre"></div>'+
+        '<div id="checkoutContenido"></div>'+
       '</div>'+
     '</div>';
 
@@ -761,23 +773,30 @@ function renderPagina(){
   document.getElementById('btnCerrarLista').addEventListener('click', cerrarLista);
   document.getElementById('overlayLista').addEventListener('click', function(e){ if(e.target===this) cerrarLista(); });
   document.getElementById('btnEnviarDesdeLista').addEventListener('click', function(){ enviarConsultaWhatsapp(); });
+  const btnConfirmarPedido = document.getElementById('btnConfirmarPedido');
+  if(btnConfirmarPedido) btnConfirmarPedido.addEventListener('click', abrirCheckout);
+  document.getElementById('btnCerrarCheckout').addEventListener('click', cerrarCheckout);
+  document.getElementById('overlayCheckout').addEventListener('click', function(e){ if(e.target===this) cerrarCheckout(); });
 
   if(numeroWa){
     document.getElementById('btnWhatsappHeader').addEventListener('click', function(){
-      const texto = 'Hola! Estoy viendo el catálogo de ' + (negocio.nombre_comercio||'') + ' y tengo una consulta.';
+      const texto = (negocio.mensaje_whatsapp && negocio.mensaje_whatsapp.trim())
+        ? negocio.mensaje_whatsapp
+        : 'Hola! Estoy viendo el catálogo de ' + (negocio.nombre||'') + ' y tengo una consulta.';
       window.open('https://wa.me/'+numeroWa+'?text='+encodeURIComponent(texto), '_blank');
     });
   }
 
   document.getElementById('btnCompartirCatalogo').addEventListener('click', function(){
-    const datosCompartir = { title: tituloPagina, text: 'Mirá el catálogo de ' + (negocio.nombre_comercio||'este comercio'), url: location.href };
+    const datosCompartir = { title: tituloPagina, text: 'Mirá el catálogo de ' + (negocio.nombre||'este comercio'), url: location.href };
     if(navigator.share){ navigator.share(datosCompartir).catch(function(){}); }
     else if(navigator.clipboard){ navigator.clipboard.writeText(location.href).then(function(){ alert('Enlace copiado.'); }); }
   });
 
   document.addEventListener('keydown', function(e){
     if(e.key !== 'Escape') return;
-    if(document.getElementById('overlayFicha').classList.contains('abierto')) cerrarFicha();
+    if(document.getElementById('overlayCheckout').classList.contains('abierto')) cerrarCheckout();
+    else if(document.getElementById('overlayFicha').classList.contains('abierto')) cerrarFicha();
     else if(document.getElementById('overlayLista').classList.contains('abierto')) cerrarLista();
   });
 
@@ -798,26 +817,15 @@ function aplicarFiltros(){
   }
 
   if(ordenActual === 'precio_asc'){
-    lista.sort(function(a,b){
-      const agA=estaAgotado(a), agB=estaAgotado(b); if(agA!==agB) return agA?1:-1;
-      return precioEfectivo(a)-precioEfectivo(b);
-    });
+    lista.sort(function(a,b){ return precioEfectivo(a)-precioEfectivo(b); });
   } else if(ordenActual === 'precio_desc'){
-    lista.sort(function(a,b){
-      const agA=estaAgotado(a), agB=estaAgotado(b); if(agA!==agB) return agA?1:-1;
-      return precioEfectivo(b)-precioEfectivo(a);
-    });
+    lista.sort(function(a,b){ return precioEfectivo(b)-precioEfectivo(a); });
   } else if(ordenActual === 'mejor_valorados'){
-    lista.sort(function(a,b){
-      const agA=estaAgotado(a), agB=estaAgotado(b); if(agA!==agB) return agA?1:-1;
-      return (b.estrella||0)-(a.estrella||0);
-    });
+    lista.sort(function(a,b){ return (b.estrella||0)-(a.estrella||0); });
   } else {
     // Relevancia (orden por defecto): 1) ofertas, 2) destacados, 3) mejor
-    // calificados, 4) el resto. Los agotados siempre van al final, sin
-    // importar lo demás.
+    // calificados, 4) el resto.
     lista.sort(function(a,b){
-      const agA=estaAgotado(a), agB=estaAgotado(b); if(agA!==agB) return agA?1:-1;
       if(!!b.oferta !== !!a.oferta) return b.oferta ? 1 : -1;
       if(!!b.destacado !== !!a.destacado) return b.destacado ? 1 : -1;
       return (b.estrella||0)-(a.estrella||0);
@@ -862,31 +870,48 @@ document.getElementById('raiz').addEventListener('click', function(e){
 function toggleConsulta(id){
   const producto = CATALOGO.productos.find(function(p){ return p.producto_id===id; });
   if(!producto) return;
-  if(listaConsulta.has(id)) listaConsulta.delete(id); else listaConsulta.set(id, producto);
+  if(carrito.has(id)) carrito.delete(id); else carrito.set(id, { producto: producto, cantidad: 1 });
   guardarListaEnStorage();
   renderGrid();
   renderBarraConsulta();
-  const enLista = listaConsulta.has(id);
-  const agotado = estaAgotado(producto);
+  const enLista = carrito.has(id);
   // La grilla principal ya se re-renderiza entera (renderGrid), pero las
   // tarjetas de "también te puede interesar" dentro de la ficha abierta
   // no forman parte de ese render — se actualizan acá directamente.
   document.querySelectorAll('.card-btn-agregar[data-id="'+CSS.escape(id)+'"]').forEach(function(btn){
     btn.classList.toggle('en-lista', enLista);
-    btn.textContent = enLista ? '✓ En tu lista' : (agotado ? '+ Consultar disponibilidad' : '+ Agregar a la lista');
+    btn.textContent = enLista ? '✓ En tu lista' : '+ Agregar a la lista';
   });
   const btnFicha = document.getElementById('btnFichaAgregar');
   if(btnFicha && btnFicha.dataset.id === id){
-    btnFicha.textContent = enLista ? '✓ En tu lista' : (agotado ? '+ Consultar disponibilidad' : '+ Agregar a mi lista');
+    btnFicha.textContent = enLista ? '✓ En tu lista' : '+ Agregar a mi lista';
   }
   if(document.getElementById('overlayLista').classList.contains('abierto')) renderListaContenido();
 }
 
+function cambiarCantidad(id, delta){
+  const entrada = carrito.get(id);
+  if(!entrada) return;
+  const nuevaCantidad = entrada.cantidad + delta;
+  if(nuevaCantidad <= 0){ toggleConsulta(id); return; }
+  entrada.cantidad = nuevaCantidad;
+  guardarListaEnStorage();
+  renderBarraConsulta();
+  renderListaContenido();
+}
+
+function totalCarrito(){
+  let total = 0;
+  carrito.forEach(function(entrada){ total += precioEfectivo(entrada.producto) * entrada.cantidad; });
+  return total;
+}
+
 function renderBarraConsulta(){
   const barra = document.getElementById('barraConsulta');
-  const cantidad = listaConsulta.size;
-  document.getElementById('contadorConsulta').textContent = cantidad;
-  barra.classList.toggle('visible', cantidad>0);
+  let items = 0;
+  carrito.forEach(function(entrada){ items += entrada.cantidad; });
+  document.getElementById('contadorConsulta').textContent = items;
+  barra.classList.toggle('visible', items>0);
 }
 
 // "También te puede interesar" — prioriza misma especie, etapa, marca y
@@ -933,23 +958,29 @@ function abrirFicha(id){
   const p = CATALOGO.productos.find(function(x){ return x.producto_id===id; });
   if(!p) return;
   const galeria = [p.imagen_url].concat(p.galeria_imagenes||[]).filter(Boolean);
-  const enLista = listaConsulta.has(id);
+  const enLista = carrito.has(id);
   const relacionados = productosRelacionados(p);
 
+  const mostrarPrecio = !CATALOGO.negocio || CATALOGO.negocio.mostrar_precios !== false;
   let precioHtml = '';
-  if(MOSTRAR_PRECIOS){
+  if(mostrarPrecio){
     if(p.oferta && p.precio_oferta){
       precioHtml = '<span class="ficha-precio precio-oferta">$'+monto(p.precio_oferta)+'</span><span class="ficha-precio tachado">$'+monto(p.precio)+'</span>';
     } else {
       precioHtml = '<span class="ficha-precio">$'+monto(p.precio)+'</span>';
     }
   }
+  let stockHtml = '';
+  if(p.stock != null){
+    stockHtml = p.stock > 0
+      ? '<div class="card-stock">Stock disponible: '+p.stock+'</div>'
+      : '<div class="card-stock sin-stock">Sin stock</div>';
+  }
 
-  const agotado = estaAgotado(p);
-  const puedeConsultar = puedeConsultarse(p);
+  const etapaFicha = etapaDe(p);
+  const etiquetasFicha = [p.especie_nombre || '', etapaFicha || ''].concat(p.etiquetas_producto || []).filter(Boolean);
 
-  const badgesHero = (agotado ? '<span class="badge badge-agotado">Sin stock</span>' : '') +
-    (p.oferta ? '<span class="badge badge-oferta">Oferta</span>' : '') +
+  const badgesHero = (p.oferta ? '<span class="badge badge-oferta">Oferta</span>' : '') +
     (p.destacado ? '<span class="badge badge-destacado">★ Destacado</span>' : '');
 
   const mediaHtml =
@@ -966,18 +997,18 @@ function abrirFicha(id){
 
   // Estructura pedida: imagen, marca, nombre, calificación, precio,
   // botones de acción, descripción, ingredientes, información nutricional.
-  const botonesHtml = (agotado && !puedeConsultar)
-    ? '<button class="btn btn-fantasma" disabled style="opacity:.5;cursor:default">Sin stock disponible</button>'
-    : '<button class="btn btn-fantasma" id="btnFichaAgregar" data-id="'+escaparHTML(id)+'">'+(enLista?'✓ En tu lista':(agotado?'+ Consultar disponibilidad':'+ Agregar a mi lista'))+'</button>'+
-      '<button class="btn btn-primario" id="btnFichaWhatsapp">'+iconoImg('whatsapp')+'Consultar por WhatsApp</button>';
-
   const infoHtml =
     '<div class="ficha-info">'+
       '<div class="ficha-marca">'+escaparHTML(p.marca_nombre)+'</div>'+
       '<h2 id="fichaTituloAria" class="ficha-nombre">'+escaparHTML(formatearNombreProducto(p.nombre))+'</h2>'+
+      (etiquetasFicha.length ? '<div class="card-etiquetas">'+etiquetasFicha.map(function(t){ return '<span class="etiqueta">'+escaparHTML(t)+'</span>'; }).join('')+'</div>' : '')+
       (p.estrella ? '<div class="ficha-estrellas">'+estrellasTexto(p.estrella)+'</div>' : '')+
-      (precioHtml ? '<div class="ficha-precio-fila">'+precioHtml+'</div>' : '')+
-      '<div class="ficha-botones">'+botonesHtml+'</div>'+
+      (mostrarPrecio ? '<div class="ficha-precio-fila">'+precioHtml+'</div>' : '')+
+      stockHtml+
+      '<div class="ficha-botones">'+
+        '<button class="btn btn-fantasma" id="btnFichaAgregar" data-id="'+escaparHTML(id)+'">'+(enLista?'✓ En tu lista':'+ Agregar a mi lista')+'</button>'+
+        '<button class="btn btn-primario" id="btnFichaWhatsapp">'+iconoImg('whatsapp')+'Consultar por WhatsApp</button>'+
+      '</div>'+
       (p.descripcion ? '<div class="ficha-seccion"><h3>Descripción</h3><p>'+escaparHTML(p.descripcion)+'</p></div>' : '')+
       (p.ingredientes ? '<div class="ficha-seccion"><h3>Ingredientes</h3><p>'+escaparHTML(p.ingredientes)+'</p></div>' : '')+
       (p.info_nutricional ? '<div class="ficha-seccion"><h3>Información nutricional</h3><p>'+escaparHTML(p.info_nutricional)+'</p></div>' : '')+
@@ -996,10 +1027,8 @@ function abrirFicha(id){
     });
   });
 
-  const btnFichaAgregarEl = document.getElementById('btnFichaAgregar');
-  if(btnFichaAgregarEl) btnFichaAgregarEl.addEventListener('click', function(){ toggleConsulta(id); });
-  const btnFichaWhatsappEl = document.getElementById('btnFichaWhatsapp');
-  if(btnFichaWhatsappEl) btnFichaWhatsappEl.addEventListener('click', function(){ enviarConsultaWhatsapp([p]); });
+  document.getElementById('btnFichaAgregar').addEventListener('click', function(){ toggleConsulta(id); });
+  document.getElementById('btnFichaWhatsapp').addEventListener('click', function(){ enviarConsultaWhatsapp([p]); });
 
   ultimoFocoAntesDeOverlay = document.activeElement;
   document.getElementById('overlayFicha').classList.add('abierto');
@@ -1024,38 +1053,308 @@ function cerrarLista(){
 
 function renderListaContenido(){
   const cont = document.getElementById('listaContenido');
-  const productos = Array.from(listaConsulta.values());
-  if(!productos.length){
+  const entradas = Array.from(carrito.values());
+  const negocio = (CATALOGO && CATALOGO.negocio) || {};
+  const mostrarPrecio = negocio.mostrar_precios !== false;
+
+  if(!entradas.length){
     cont.innerHTML = '<div class="lista-vacia">Todavía no agregaste productos.</div>';
+    document.getElementById('listaTotalFila').style.display = 'none';
+    const btnCP1 = document.getElementById('btnConfirmarPedido');
+    if(btnCP1) btnCP1.disabled = true;
+    document.getElementById('btnEnviarDesdeLista').disabled = true;
     return;
   }
-  cont.innerHTML = productos.map(function(p){
+
+  cont.innerHTML = entradas.map(function(entrada){
+    const p = entrada.producto;
     return '<div class="lista-item" data-id="'+escaparHTML(p.producto_id)+'">'+
       '<div class="card-img">'+imagenConFallback(p.imagen_url, p.nombre)+'</div>'+
       '<div class="lista-item-info">'+
         '<div class="lista-item-nombre">'+escaparHTML(formatearNombreProducto(p.nombre))+'</div>'+
-        (MOSTRAR_PRECIOS ? '<div class="lista-item-precio">$'+monto(precioEfectivo(p))+'</div>' : '')+
+        (mostrarPrecio ? '<div class="lista-item-precio">$'+monto(precioEfectivo(p))+' c/u'+(entrada.cantidad>1 ? ' · $'+monto(precioEfectivo(p)*entrada.cantidad)+' subtotal' : '')+'</div>' : '')+
+      '</div>'+
+      '<div class="lista-item-qty">'+
+        '<button class="qty-btn" data-id="'+escaparHTML(p.producto_id)+'" data-delta="-1" aria-label="Restar">−</button>'+
+        '<span class="qty-valor">'+entrada.cantidad+'</span>'+
+        '<button class="qty-btn" data-id="'+escaparHTML(p.producto_id)+'" data-delta="1" aria-label="Sumar">+</button>'+
       '</div>'+
       '<button class="lista-item-quitar" data-id="'+escaparHTML(p.producto_id)+'" aria-label="Quitar">✕</button>'+
     '</div>';
   }).join('');
+
   cont.querySelectorAll('.lista-item-quitar').forEach(function(btn){
     btn.addEventListener('click', function(){ toggleConsulta(btn.dataset.id); });
   });
+  cont.querySelectorAll('.qty-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){ cambiarCantidad(btn.dataset.id, Number(btn.dataset.delta)); });
+  });
+
+  const filaTotal = document.getElementById('listaTotalFila');
+  if(mostrarPrecio){
+    filaTotal.style.display = 'flex';
+    document.getElementById('listaTotalValor').textContent = '$'+monto(totalCarrito());
+  } else {
+    filaTotal.style.display = 'none';
+  }
+
+  const btnCP2 = document.getElementById('btnConfirmarPedido');
+  if(btnCP2) btnCP2.disabled = false;
+  document.getElementById('btnEnviarDesdeLista').disabled = false;
+}
+
+function textoResumenPedido_(){
+  const negocio = (CATALOGO && CATALOGO.negocio) || {};
+  const mostrarPrecio = negocio.mostrar_precios !== false;
+  const entradas = Array.from(carrito.values());
+  const lineas = entradas.map(function(entrada){
+    const p = entrada.producto;
+    let linea = '- '+entrada.cantidad+'x '+formatearNombreProducto(p.nombre) + (p.marca_nombre ? ' ('+p.marca_nombre+')' : '');
+    if(mostrarPrecio) linea += ' — $'+monto(precioEfectivo(p)*entrada.cantidad);
+    return linea;
+  });
+  let texto = lineas.join('\n');
+  if(mostrarPrecio) texto += '\n\nTotal: $'+monto(totalCarrito());
+  return texto;
 }
 
 function enviarConsultaWhatsapp(productosForzados){
-  const productos = productosForzados || Array.from(listaConsulta.values());
-  if(!productos.length){ alert('Agregá al menos un producto a tu lista.'); return; }
-
   const negocio = (CATALOGO && CATALOGO.negocio) || {};
-  const numero = String(negocio.whatsapp_numero || '').replace(/[^\d]/g,'');
+  const numero = String(negocio.whatsapp || '').replace(/[^\d]/g,'');
+  const encabezado = (negocio.mensaje_whatsapp && negocio.mensaje_whatsapp.trim())
+    ? negocio.mensaje_whatsapp
+    : 'Hola. Estoy interesado en los siguientes productos:';
 
-  const lineas = productos.map(function(p){ return '- '+formatearNombreProducto(p.nombre) + (p.marca_nombre ? ' ('+p.marca_nombre+')' : ''); });
-  const texto = 'Hola. Estoy interesado en los siguientes productos:\n\n'+lineas.join('\n')+'\n\nEspero su respuesta.';
+  let cuerpo;
+  if(productosForzados){
+    const mostrarPrecio = negocio.mostrar_precios !== false;
+    cuerpo = productosForzados.map(function(p){
+      return '- '+formatearNombreProducto(p.nombre) + (p.marca_nombre ? ' ('+p.marca_nombre+')' : '') + (mostrarPrecio ? ' — $'+monto(precioEfectivo(p)) : '');
+    }).join('\n');
+  } else {
+    if(!carrito.size){ alert('Agregá al menos un producto a tu lista.'); return; }
+    cuerpo = textoResumenPedido_();
+  }
 
+  const texto = encabezado+'\n\n'+cuerpo+'\n\nEspero su respuesta.';
   const url = (numero ? 'https://wa.me/'+numero : 'https://wa.me/') + '?text=' + encodeURIComponent(texto);
   window.open(url, '_blank');
+}
+
+// ═══════════════════════════════════════════════════════════
+// CHECKOUT — datos del cliente, método de pago, comprobante.
+// enviarPedidoAlERP_() es el enchufe para cuando esté la integración
+// con el backend (doPost + PedidosPendientes). Hoy no existe todavía,
+// así que el pedido se arma igual y se manda por WhatsApp como
+// confirmación real — pero el payload ya queda armado en el formato
+// que va a necesitar el backend el día que se conecte.
+// ═══════════════════════════════════════════════════════════
+
+function abrirCheckout(){
+  if(!carrito.size) return;
+  const negocio = (CATALOGO && CATALOGO.negocio) || {};
+  metodoPagoElegido = 'efectivo';
+  comprobanteBase64 = null;
+  comprobanteMimeType = '';
+
+  const mostrarPagos = !!negocio.acepta_pagos;
+
+  document.getElementById('checkoutContenido').innerHTML =
+    '<h2 style="font-size:1.05rem;margin-bottom:14px">Confirmar pedido</h2>'+
+
+    '<div class="checkout-resumen">'+textoResumenPedidoHTML_()+'</div>'+
+
+    '<label class="checkout-label">Tu nombre *</label>'+
+    '<input id="ckNombre" type="text" class="checkout-input" placeholder="Nombre y apellido">'+
+
+    '<label class="checkout-label">Teléfono *</label>'+
+    '<input id="ckTelefono" type="tel" class="checkout-input" placeholder="Tu WhatsApp o teléfono">'+
+
+    '<label class="checkout-label">Notas para el pedido (opcional)</label>'+
+    '<textarea id="ckNotas" class="checkout-textarea" placeholder="Horario de entrega, aclaraciones, etc."></textarea>'+
+
+    (mostrarPagos ?
+      '<label class="checkout-label">Método de pago</label>'+
+      '<div class="metodo-pago-opciones">'+
+        '<button type="button" class="metodo-pago-opcion activa" data-metodo="efectivo">Efectivo / a coordinar</button>'+
+        '<button type="button" class="metodo-pago-opcion" data-metodo="transferencia">Transferencia</button>'+
+      '</div>'+
+      '<div id="datosTransferencia" class="datos-transferencia">'+htmlDatosTransferencia_(negocio)+'</div>'
+    : '')+
+
+    '<div id="checkoutMensaje" class="msg"></div>'+
+    '<button class="btn btn-primario" style="width:100%;margin-top:14px" id="btnEnviarCheckout">Confirmar pedido</button>';
+
+  if(mostrarPagos){
+    document.querySelectorAll('.metodo-pago-opcion').forEach(function(btn){
+      btn.addEventListener('click', function(){ elegirMetodoPago_(btn.dataset.metodo); });
+    });
+    const inputComprobante = document.getElementById('archivoComprobante');
+    if(inputComprobante) inputComprobante.addEventListener('change', manejarArchivoComprobante_);
+  }
+  document.getElementById('btnEnviarCheckout').addEventListener('click', confirmarPedido_);
+
+  ultimoFocoAntesDeOverlay = document.activeElement;
+  document.getElementById('overlayCheckout').classList.add('abierto');
+}
+
+function cerrarCheckout(){
+  document.getElementById('overlayCheckout').classList.remove('abierto');
+  if(ultimoFocoAntesDeOverlay) ultimoFocoAntesDeOverlay.focus();
+}
+
+function textoResumenPedidoHTML_(){
+  const negocio = (CATALOGO && CATALOGO.negocio) || {};
+  const mostrarPrecio = negocio.mostrar_precios !== false;
+  const entradas = Array.from(carrito.values());
+  const filas = entradas.map(function(entrada){
+    const p = entrada.producto;
+    return '<div class="checkout-resumen-fila"><span>'+entrada.cantidad+'x '+escaparHTML(formatearNombreProducto(p.nombre))+'</span>'+
+      (mostrarPrecio ? '<span>$'+monto(precioEfectivo(p)*entrada.cantidad)+'</span>' : '')+'</div>';
+  }).join('');
+  const total = mostrarPrecio ? '<div class="checkout-resumen-fila checkout-resumen-total"><span>Total</span><span>$'+monto(totalCarrito())+'</span></div>' : '';
+  return filas + total;
+}
+
+function htmlDatosTransferencia_(negocio){
+  const filas = [
+    ['Alias', negocio.alias_pago],
+    ['CBU', negocio.cbu],
+    ['Titular', negocio.titular_pago],
+    ['Banco', negocio.banco_pago],
+  ].filter(function(f){ return f[1]; });
+
+  return (filas.length ? '<div class="datos-pago-tabla">'+filas.map(function(f){
+    return '<div class="datos-pago-fila"><span>'+f[0]+'</span><strong>'+escaparHTML(f[1])+'</strong></div>';
+  }).join('')+'</div>' : '')+
+  (negocio.qr_url ? '<div class="datos-pago-qr"><img src="'+escaparHTML(negocio.qr_url)+'" alt="QR de pago"></div>' : '')+
+  '<label class="checkout-label">Adjuntar comprobante de pago (opcional)</label>'+
+  '<input id="archivoComprobante" type="file" accept="image/jpeg,image/png,image/webp,image/gif" class="checkout-file">'+
+  '<div id="comprobantePreview" class="comprobante-preview"></div>';
+}
+
+function elegirMetodoPago_(metodo){
+  metodoPagoElegido = metodo;
+  document.querySelectorAll('.metodo-pago-opcion').forEach(function(btn){
+    btn.classList.toggle('activa', btn.dataset.metodo === metodo);
+  });
+  document.getElementById('datosTransferencia').classList.toggle('visible', metodo === 'transferencia');
+}
+
+function manejarArchivoComprobante_(event){
+  const archivo = event.target.files && event.target.files[0];
+  const preview = document.getElementById('comprobantePreview');
+  if(!archivo){ comprobanteBase64 = null; preview.innerHTML = ''; return; }
+  if(archivo.size > 5 * 1024 * 1024){
+    alert('La imagen no puede superar los 5 MB.');
+    event.target.value = '';
+    return;
+  }
+  const lector = new FileReader();
+  lector.onload = function(e){
+    const contenido = String(e.target.result || '');
+    const separador = contenido.indexOf(',');
+    comprobanteBase64 = separador >= 0 ? contenido.substring(separador+1) : null;
+    comprobanteMimeType = archivo.type;
+    preview.innerHTML = '<img src="'+contenido+'" alt="Comprobante"><button type="button" id="btnQuitarComprobante" aria-label="Quitar">✕</button>';
+    document.getElementById('btnQuitarComprobante').addEventListener('click', function(){
+      comprobanteBase64 = null; comprobanteMimeType = '';
+      document.getElementById('archivoComprobante').value = '';
+      preview.innerHTML = '';
+    });
+  };
+  lector.readAsDataURL(archivo);
+}
+
+// Enchufe para la integración con el ERP (doPost + PedidosPendientes).
+// Hoy no hay backend del otro lado, así que devuelve un fallback — pero
+// el payload ya sale armado en la forma que va a necesitar ese endpoint,
+// para no tener que retocar esta parte cuando se conecte.
+async function enviarPedidoAlERP_(payload){
+  console.log('Pedido armado (todavía sin conexión al ERP):', payload);
+  return { ok: false, fallback: true };
+}
+
+async function confirmarPedido_(){
+  const nombre = document.getElementById('ckNombre').value.trim();
+  const telefono = document.getElementById('ckTelefono').value.trim();
+  const notas = document.getElementById('ckNotas').value.trim();
+  const mensajeEl = document.getElementById('checkoutMensaje');
+
+  if(!nombre || !telefono){
+    mensajeEl.className = 'msg error';
+    mensajeEl.textContent = 'Completá tu nombre y teléfono para confirmar.';
+    return;
+  }
+
+  const negocio = (CATALOGO && CATALOGO.negocio) || {};
+  const payload = {
+    fecha: new Date().toISOString(),
+    cliente: { nombre: nombre, telefono: telefono, notas: notas },
+    items: Array.from(carrito.values()).map(function(entrada){
+      return {
+        producto_id: entrada.producto.producto_id,
+        nombre: entrada.producto.nombre,
+        cantidad: entrada.cantidad,
+        precio_unitario: precioEfectivo(entrada.producto),
+      };
+    }),
+    total: totalCarrito(),
+    metodo_pago: negocio.acepta_pagos ? metodoPagoElegido : null,
+    comprobante_base64: metodoPagoElegido === 'transferencia' ? comprobanteBase64 : null,
+    comprobante_mime_type: metodoPagoElegido === 'transferencia' ? comprobanteMimeType : '',
+  };
+
+  mensajeEl.className = 'msg ok';
+  mensajeEl.textContent = 'Confirmando...';
+
+  const resultado = await enviarPedidoAlERP_(payload);
+
+  if(resultado.ok){
+    // Camino real, cuando exista la integración: el pedido ya quedó
+    // pendiente en el ERP. Por ahora nunca entra acá.
+    mostrarConfirmacionPedido_();
+    return;
+  }
+
+  // Fallback de hoy: todavía no hay backend, así que la confirmación
+  // real sigue siendo WhatsApp — pero con todo el detalle del pedido
+  // armado (cliente, cantidades, método de pago elegido).
+  let texto = 'Hola! Quiero confirmar el siguiente pedido:\n\n';
+  texto += textoResumenPedido_();
+  texto += '\n\nNombre: '+nombre+'\nTeléfono: '+telefono;
+  if(notas) texto += '\nNotas: '+notas;
+  if(negocio.acepta_pagos){
+    texto += '\nMétodo de pago: '+(metodoPagoElegido === 'transferencia' ? 'Transferencia' : 'Efectivo / a coordinar');
+    if(metodoPagoElegido === 'transferencia' && comprobanteBase64){
+      texto += '\n(Te adjunto el comprobante de pago acá en el chat)';
+    }
+  }
+
+  const numero = String(negocio.whatsapp || '').replace(/[^\d]/g,'');
+  const url = (numero ? 'https://wa.me/'+numero : 'https://wa.me/') + '?text=' + encodeURIComponent(texto);
+  window.open(url, '_blank');
+
+  mostrarConfirmacionPedido_();
+}
+
+function mostrarConfirmacionPedido_(){
+  document.getElementById('checkoutContenido').innerHTML =
+    '<div class="checkout-confirmacion">'+
+      '<div class="checkout-confirmacion-icono">'+iconoImg('whatsapp')+'</div>'+
+      '<h2 style="font-size:1.05rem">¡Listo!</h2>'+
+      '<p>Tu pedido se armó y se abrió WhatsApp para que lo confirmes con el comercio. Si adjuntaste un comprobante, recordá enviarlo también ahí.</p>'+
+      '<button class="btn btn-primario" style="width:100%" onclick="finalizarCheckout_()">Cerrar</button>'+
+    '</div>';
+}
+
+function finalizarCheckout_(){
+  carrito.clear();
+  guardarListaEnStorage();
+  renderGrid();
+  renderBarraConsulta();
+  cerrarCheckout();
+  cerrarLista();
 }
 
 iniciar();
