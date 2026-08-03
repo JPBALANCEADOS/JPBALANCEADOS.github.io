@@ -118,6 +118,7 @@ header.marca{background:var(--marca);color:#fff;}
 .badge{padding:2px 8px;border-radius:999px;font-size:.6rem;font-weight:800;text-transform:uppercase;color:#fff;}
 .badge-oferta{background:var(--rojo);font-size:.66rem;padding:4px 10px;}
 .badge-destacado{background:var(--amarillo);color:#2A1F04;}
+.badge-agotado{background:var(--carbon-60);}
 .card-img{position:relative;aspect-ratio:1/1;width:100%;display:flex;align-items:center;justify-content:center;background:#fff;border-radius:var(--radio-sm);overflow:hidden;margin-bottom:8px;}
 .card-img img{width:100%;height:100%;object-fit:contain;}
 .sin-imagen{color:var(--carbon-60);opacity:.3;}
@@ -134,6 +135,7 @@ header.marca{background:var(--marca);color:#fff;}
 .card-btn-agregar:hover{background:var(--marca-pale);}
 .card-btn-agregar.en-lista{background:var(--marca);color:#fff;}
 .card-btn-agregar.en-lista:hover{background:var(--marca-oscura);}
+.card-btn-agregar:disabled{opacity:.5;cursor:default;background:#fff;color:var(--carbon-60);border-color:var(--borde);}
 
 .vacio-grid{grid-column:1/-1;padding:48px 20px;text-align:center;color:var(--carbon-60);display:flex;flex-direction:column;align-items:center;gap:12px;}
 .vacio-grid .icono{color:var(--carbon-60);opacity:.35;}
@@ -183,11 +185,12 @@ header.marca{background:var(--marca);color:#fff;}
 .ficha-precio.tachado{font-size:.95rem;font-weight:600;color:var(--carbon-60);text-decoration:line-through;}
 .ficha-botones{display:flex;gap:8px;margin:14px 0 4px;}
 .btn{flex:1;height:46px;border-radius:999px;font-weight:700;font-size:.88rem;display:flex;align-items:center;justify-content:center;gap:7px;transition:transform .1s ease, box-shadow .15s ease;}
-.btn:disabled{opacity:.5;pointer-events:none;}
 .btn:active{transform:scale(.97);}
 .btn-primario{background:var(--marca);color:#fff;}
 .btn-primario:hover{box-shadow:var(--sombra-md);}
+.btn-primario:disabled{opacity:.5;cursor:default;box-shadow:none;}
 .btn-fantasma{background:var(--marca-pale);color:var(--marca-oscura);}
+.btn-fantasma:disabled{opacity:.5;cursor:default;}
 .ficha-seccion{margin-top:16px;}
 .ficha-seccion h3{font-size:.7rem;color:var(--carbon-60);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;}
 .ficha-seccion p{font-size:.88rem;color:var(--carbon);white-space:pre-line;}
@@ -206,6 +209,7 @@ header.marca{background:var(--marca);color:#fff;}
 .lista-item-info{flex:1;min-width:0;}
 .lista-item-nombre{font-size:.82rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .lista-item-precio{font-size:.76rem;color:var(--carbon-60);}
+.lista-item-agotado{font-size:.72rem;color:var(--rojo);font-weight:700;}
 .lista-item-qty{display:flex;align-items:center;gap:6px;flex:none;}
 .qty-btn{width:26px;height:26px;border-radius:50%;background:var(--hueso);color:var(--carbon);font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:background .12s;}
 .qty-btn:hover{background:var(--marca-pale);color:var(--marca);}
@@ -215,6 +219,8 @@ header.marca{background:var(--marca);color:#fff;}
 .lista-vacia{padding:24px 0;text-align:center;color:var(--carbon-60);font-size:.85rem;}
 .lista-total-fila{display:none;align-items:center;justify-content:space-between;padding:12px 0 4px;margin-top:6px;border-top:1px solid var(--borde);font-size:.95rem;}
 .lista-total-fila strong{font-size:1.1rem;}
+.lista-aviso-agotados{display:none;margin-top:6px;padding:8px 10px;border-radius:var(--radio-sm);background:#ffe5e7;color:var(--rojo);font-size:.76rem;}
+.lista-aviso-agotados.visible{display:block;}
 
 /* ── Checkout: datos del cliente, método de pago, comprobante ── */
 .checkout-resumen{background:var(--hueso);border-radius:var(--radio-sm);padding:10px 12px;margin-bottom:16px;}
@@ -355,6 +361,16 @@ function formatearNombreProducto(nombre){
 function precioEfectivo(p){ return (p.oferta && p.precio_oferta) ? p.precio_oferta : p.precio; }
 function etapaDe(p){ return p.edad_etaria_canonica || p.ali_edad_etaria || ''; }
 
+// stock null/undefined = no hay dato (no se pidió o no está esa fila en
+// stock.json) → NO se considera agotado, para no ocultar por falta de
+// info. Solo se considera agotado cuando el número es <= 0 de verdad.
+function estaAgotado(p){ return p.stock !== null && p.stock !== undefined && Number(p.stock) <= 0; }
+function puedeConsultarse(p){
+  if(!estaAgotado(p)) return true;
+  const negocio = (CATALOGO && CATALOGO.negocio) || {};
+  return negocio.permitir_consultar_sin_stock !== false;
+}
+
 // Instagram/TikTok se cargan a veces como "@usuario" en vez de URL — esto
 // arma el link correcto en cualquiera de los dos casos.
 function normalizarLinkRed_(valor, red){
@@ -381,8 +397,11 @@ function imagenConFallback(url, alt){
 // exactamente iguales y el click (abrir / agregar a la lista) funcione
 // en los dos lugares sin código repetido.
 function htmlTarjetaProducto(p){
+  const negocio = (CATALOGO && CATALOGO.negocio) || {};
   const enLista = carrito.has(p.producto_id);
-  const mostrarPrecio = !CATALOGO.negocio || CATALOGO.negocio.mostrar_precios !== false;
+  const agotado = estaAgotado(p);
+  const puedeConsultar = puedeConsultarse(p);
+  const mostrarPrecio = negocio.mostrar_precios !== false;
   let precioHtml = '';
   if(mostrarPrecio){
     if(p.oferta && p.precio_oferta){
@@ -392,15 +411,26 @@ function htmlTarjetaProducto(p){
     }
   }
   let stockHtml = '';
-  if(p.stock != null){
+  if(negocio.mostrar_stock && p.stock != null){
     stockHtml = p.stock > 0
       ? '<div class="card-stock">Stock: '+p.stock+'</div>'
       : '<div class="card-stock sin-stock">Sin stock</div>';
   }
   const etapa = etapaDe(p);
   const etiquetas = [p.especie_nombre || '', etapa || ''].concat(p.etiquetas_producto || []).filter(Boolean);
+
+  let botonHtml;
+  if(agotado && !puedeConsultar){
+    botonHtml = '<button class="card-btn-agregar" disabled>Sin stock</button>';
+  } else {
+    botonHtml = '<button class="card-btn-agregar'+(enLista?' en-lista':'')+'" data-id="'+escaparHTML(p.producto_id)+'">'+
+      (enLista ? '✓ En tu lista' : (agotado ? '+ Consultar disponibilidad' : '+ Agregar a la lista'))+
+    '</button>';
+  }
+
   return '<article class="card" data-id="'+escaparHTML(p.producto_id)+'">'+
     '<div class="card-badges">'+
+      (agotado ? '<span class="badge badge-agotado">Sin stock</span>' : '')+
       (p.oferta ? '<span class="badge badge-oferta">Oferta</span>' : '')+
       (p.destacado ? '<span class="badge badge-destacado">★ Destacado</span>' : '')+
     '</div>'+
@@ -413,9 +443,7 @@ function htmlTarjetaProducto(p){
       (mostrarPrecio ? '<div class="card-precio">'+precioHtml+'</div>' : '')+
       stockHtml+
     '</button>'+
-    '<button class="card-btn-agregar'+(enLista?' en-lista':'')+'" data-id="'+escaparHTML(p.producto_id)+'">'+
-      (enLista ? '✓ En tu lista' : '+ Agregar a la lista')+
-    '</button>'+
+    botonHtml+
   '</article>';
 }
 
@@ -499,7 +527,7 @@ function normalizarProductoCatalogo_(p){
     estrella: p.estrellas != null ? Number(p.estrellas) : null,
     etiquetas_producto: p.etiquetas || [],
     precio: 0,   // se completa con precios.json
-    stock: null, // se completa con stock.json (null = no mostrar)
+    stock: null, // se completa con stock.json (null = no hay dato)
   };
 }
 
@@ -547,6 +575,11 @@ async function iniciar(){
   const base = API_URL.split('?')[0];
 
   try{
+    // Los 4 recursos se piden siempre, sin condicionar a mostrar_stock:
+    // aunque el negocio no quiera EXHIBIR el número de stock, igual lo
+    // necesitamos para poder filtrar los agotados, ordenarlos al final,
+    // y bloquear el botón de pedir — mostrar_stock solo decide si el
+    // número se ve en la tarjeta/ficha, no si el dato se usa internamente.
     const [datosCatalogo, datosPrecios, datosStock, datosNegocio] = await Promise.all([
       fetchRecurso_(base, 'catalogo'),
       fetchRecurso_(base, 'precios'),
@@ -562,16 +595,23 @@ async function iniciar(){
     const preciosMap = datosPrecios || {};
     const stockMap = datosStock || {};
     const negocio = datosNegocio || {};
-    const hayStockPublicado = !!negocio.mostrar_stock && Object.keys(stockMap).length > 0;
+    const hayDatosDeStock = Object.keys(stockMap).length > 0;
 
-    const productos = datosCatalogo.map(function(p){
+    let productos = datosCatalogo.map(function(p){
       const norm = normalizarProductoCatalogo_(p);
       norm.precio = Number(preciosMap[norm.producto_id] || 0);
-      norm.stock = (hayStockPublicado && Object.prototype.hasOwnProperty.call(stockMap, norm.producto_id))
+      norm.stock = (hayDatosDeStock && Object.prototype.hasOwnProperty.call(stockMap, norm.producto_id))
         ? Number(stockMap[norm.producto_id])
         : null;
       return norm;
     });
+
+    if(negocio.mostrar_sin_precio === false){
+      productos = productos.filter(function(p){ return p.precio > 0; });
+    }
+    if(negocio.mostrar_sin_stock === false){
+      productos = productos.filter(function(p){ return !estaAgotado(p); });
+    }
 
     CATALOGO = {
       fecha_publicacion: negocio.fecha_ultima_publicacion || new Date().toISOString(),
@@ -714,6 +754,7 @@ function renderPagina(){
         '<div class="hoja-agarre"></div>'+
         '<h2 style="font-size:1.05rem;margin-bottom:10px">Tu carrito</h2>'+
         '<div id="listaContenido"></div>'+
+        '<div id="listaAvisoAgotados" class="lista-aviso-agotados">Sacá los productos sin stock del carrito para poder confirmar el pedido — podés usar "Solo consultar" mientras tanto.</div>'+
         '<div id="listaTotalFila" class="lista-total-fila">'+
           '<span>Total</span><strong id="listaTotalValor">$0</strong>'+
         '</div>'+
@@ -816,16 +857,28 @@ function aplicarFiltros(){
     });
   }
 
+  // Los agotados siempre van al final, sin importar el orden elegido —
+  // se antepone esa comparación a la lógica de cada modo.
   if(ordenActual === 'precio_asc'){
-    lista.sort(function(a,b){ return precioEfectivo(a)-precioEfectivo(b); });
+    lista.sort(function(a,b){
+      const agA=estaAgotado(a), agB=estaAgotado(b); if(agA!==agB) return agA?1:-1;
+      return precioEfectivo(a)-precioEfectivo(b);
+    });
   } else if(ordenActual === 'precio_desc'){
-    lista.sort(function(a,b){ return precioEfectivo(b)-precioEfectivo(a); });
+    lista.sort(function(a,b){
+      const agA=estaAgotado(a), agB=estaAgotado(b); if(agA!==agB) return agA?1:-1;
+      return precioEfectivo(b)-precioEfectivo(a);
+    });
   } else if(ordenActual === 'mejor_valorados'){
-    lista.sort(function(a,b){ return (b.estrella||0)-(a.estrella||0); });
+    lista.sort(function(a,b){
+      const agA=estaAgotado(a), agB=estaAgotado(b); if(agA!==agB) return agA?1:-1;
+      return (b.estrella||0)-(a.estrella||0);
+    });
   } else {
     // Relevancia (orden por defecto): 1) ofertas, 2) destacados, 3) mejor
     // calificados, 4) el resto.
     lista.sort(function(a,b){
+      const agA=estaAgotado(a), agB=estaAgotado(b); if(agA!==agB) return agA?1:-1;
       if(!!b.oferta !== !!a.oferta) return b.oferta ? 1 : -1;
       if(!!b.destacado !== !!a.destacado) return b.destacado ? 1 : -1;
       return (b.estrella||0)-(a.estrella||0);
@@ -864,7 +917,7 @@ document.getElementById('raiz').addEventListener('click', function(e){
   const btnAbrir = e.target.closest('.card-abrir');
   if(btnAbrir){ abrirFicha(btnAbrir.dataset.id); return; }
   const btnAgregar = e.target.closest('.card-btn-agregar');
-  if(btnAgregar){ toggleConsulta(btnAgregar.dataset.id); return; }
+  if(btnAgregar && !btnAgregar.disabled){ toggleConsulta(btnAgregar.dataset.id); return; }
 });
 
 function toggleConsulta(id){
@@ -875,16 +928,17 @@ function toggleConsulta(id){
   renderGrid();
   renderBarraConsulta();
   const enLista = carrito.has(id);
+  const agotado = estaAgotado(producto);
   // La grilla principal ya se re-renderiza entera (renderGrid), pero las
   // tarjetas de "también te puede interesar" dentro de la ficha abierta
   // no forman parte de ese render — se actualizan acá directamente.
   document.querySelectorAll('.card-btn-agregar[data-id="'+CSS.escape(id)+'"]').forEach(function(btn){
     btn.classList.toggle('en-lista', enLista);
-    btn.textContent = enLista ? '✓ En tu lista' : '+ Agregar a la lista';
+    btn.textContent = enLista ? '✓ En tu lista' : (agotado ? '+ Consultar disponibilidad' : '+ Agregar a la lista');
   });
   const btnFicha = document.getElementById('btnFichaAgregar');
   if(btnFicha && btnFicha.dataset.id === id){
-    btnFicha.textContent = enLista ? '✓ En tu lista' : '+ Agregar a mi lista';
+    btnFicha.textContent = enLista ? '✓ En tu lista' : (agotado ? '+ Consultar disponibilidad' : '+ Agregar a mi lista');
   }
   if(document.getElementById('overlayLista').classList.contains('abierto')) renderListaContenido();
 }
@@ -904,6 +958,12 @@ function totalCarrito(){
   let total = 0;
   carrito.forEach(function(entrada){ total += precioEfectivo(entrada.producto) * entrada.cantidad; });
   return total;
+}
+
+function carritoTieneAgotados(){
+  let hayAgotados = false;
+  carrito.forEach(function(entrada){ if(estaAgotado(entrada.producto)) hayAgotados = true; });
+  return hayAgotados;
 }
 
 function renderBarraConsulta(){
@@ -960,8 +1020,11 @@ function abrirFicha(id){
   const galeria = [p.imagen_url].concat(p.galeria_imagenes||[]).filter(Boolean);
   const enLista = carrito.has(id);
   const relacionados = productosRelacionados(p);
+  const negocio = (CATALOGO && CATALOGO.negocio) || {};
+  const agotado = estaAgotado(p);
+  const puedeConsultar = puedeConsultarse(p);
 
-  const mostrarPrecio = !CATALOGO.negocio || CATALOGO.negocio.mostrar_precios !== false;
+  const mostrarPrecio = negocio.mostrar_precios !== false;
   let precioHtml = '';
   if(mostrarPrecio){
     if(p.oferta && p.precio_oferta){
@@ -971,7 +1034,7 @@ function abrirFicha(id){
     }
   }
   let stockHtml = '';
-  if(p.stock != null){
+  if(negocio.mostrar_stock && p.stock != null){
     stockHtml = p.stock > 0
       ? '<div class="card-stock">Stock disponible: '+p.stock+'</div>'
       : '<div class="card-stock sin-stock">Sin stock</div>';
@@ -980,7 +1043,8 @@ function abrirFicha(id){
   const etapaFicha = etapaDe(p);
   const etiquetasFicha = [p.especie_nombre || '', etapaFicha || ''].concat(p.etiquetas_producto || []).filter(Boolean);
 
-  const badgesHero = (p.oferta ? '<span class="badge badge-oferta">Oferta</span>' : '') +
+  const badgesHero = (agotado ? '<span class="badge badge-agotado">Sin stock</span>' : '') +
+    (p.oferta ? '<span class="badge badge-oferta">Oferta</span>' : '') +
     (p.destacado ? '<span class="badge badge-destacado">★ Destacado</span>' : '');
 
   const mediaHtml =
@@ -995,6 +1059,11 @@ function abrirFicha(id){
         }).join('')+'</div>' : '')+
     '</div>';
 
+  const botonesHtml = (agotado && !puedeConsultar)
+    ? '<button class="btn btn-fantasma" disabled>Sin stock disponible</button>'
+    : '<button class="btn btn-fantasma" id="btnFichaAgregar" data-id="'+escaparHTML(id)+'">'+(enLista?'✓ En tu lista':(agotado?'+ Consultar disponibilidad':'+ Agregar a mi lista'))+'</button>'+
+      '<button class="btn btn-primario" id="btnFichaWhatsapp">'+iconoImg('whatsapp')+'Consultar por WhatsApp</button>';
+
   // Estructura pedida: imagen, marca, nombre, calificación, precio,
   // botones de acción, descripción, ingredientes, información nutricional.
   const infoHtml =
@@ -1005,10 +1074,7 @@ function abrirFicha(id){
       (p.estrella ? '<div class="ficha-estrellas">'+estrellasTexto(p.estrella)+'</div>' : '')+
       (mostrarPrecio ? '<div class="ficha-precio-fila">'+precioHtml+'</div>' : '')+
       stockHtml+
-      '<div class="ficha-botones">'+
-        '<button class="btn btn-fantasma" id="btnFichaAgregar" data-id="'+escaparHTML(id)+'">'+(enLista?'✓ En tu lista':'+ Agregar a mi lista')+'</button>'+
-        '<button class="btn btn-primario" id="btnFichaWhatsapp">'+iconoImg('whatsapp')+'Consultar por WhatsApp</button>'+
-      '</div>'+
+      '<div class="ficha-botones">'+botonesHtml+'</div>'+
       (p.descripcion ? '<div class="ficha-seccion"><h3>Descripción</h3><p>'+escaparHTML(p.descripcion)+'</p></div>' : '')+
       (p.ingredientes ? '<div class="ficha-seccion"><h3>Ingredientes</h3><p>'+escaparHTML(p.ingredientes)+'</p></div>' : '')+
       (p.info_nutricional ? '<div class="ficha-seccion"><h3>Información nutricional</h3><p>'+escaparHTML(p.info_nutricional)+'</p></div>' : '')+
@@ -1027,8 +1093,10 @@ function abrirFicha(id){
     });
   });
 
-  document.getElementById('btnFichaAgregar').addEventListener('click', function(){ toggleConsulta(id); });
-  document.getElementById('btnFichaWhatsapp').addEventListener('click', function(){ enviarConsultaWhatsapp([p]); });
+  const btnFichaAgregarEl = document.getElementById('btnFichaAgregar');
+  if(btnFichaAgregarEl) btnFichaAgregarEl.addEventListener('click', function(){ toggleConsulta(id); });
+  const btnFichaWhatsappEl = document.getElementById('btnFichaWhatsapp');
+  if(btnFichaWhatsappEl) btnFichaWhatsappEl.addEventListener('click', function(){ enviarConsultaWhatsapp([p]); });
 
   ultimoFocoAntesDeOverlay = document.activeElement;
   document.getElementById('overlayFicha').classList.add('abierto');
@@ -1056,23 +1124,28 @@ function renderListaContenido(){
   const entradas = Array.from(carrito.values());
   const negocio = (CATALOGO && CATALOGO.negocio) || {};
   const mostrarPrecio = negocio.mostrar_precios !== false;
+  const btnConfirmarPedido = document.getElementById('btnConfirmarPedido');
+  const avisoAgotados = document.getElementById('listaAvisoAgotados');
 
   if(!entradas.length){
     cont.innerHTML = '<div class="lista-vacia">Todavía no agregaste productos.</div>';
     document.getElementById('listaTotalFila').style.display = 'none';
-    const btnCP1 = document.getElementById('btnConfirmarPedido');
-    if(btnCP1) btnCP1.disabled = true;
+    avisoAgotados.classList.remove('visible');
+    if(btnConfirmarPedido) btnConfirmarPedido.disabled = true;
     document.getElementById('btnEnviarDesdeLista').disabled = true;
     return;
   }
 
   cont.innerHTML = entradas.map(function(entrada){
     const p = entrada.producto;
+    const agotado = estaAgotado(p);
     return '<div class="lista-item" data-id="'+escaparHTML(p.producto_id)+'">'+
       '<div class="card-img">'+imagenConFallback(p.imagen_url, p.nombre)+'</div>'+
       '<div class="lista-item-info">'+
         '<div class="lista-item-nombre">'+escaparHTML(formatearNombreProducto(p.nombre))+'</div>'+
-        (mostrarPrecio ? '<div class="lista-item-precio">$'+monto(precioEfectivo(p))+' c/u'+(entrada.cantidad>1 ? ' · $'+monto(precioEfectivo(p)*entrada.cantidad)+' subtotal' : '')+'</div>' : '')+
+        (agotado
+          ? '<div class="lista-item-agotado">Sin stock — no se puede pedir</div>'
+          : (mostrarPrecio ? '<div class="lista-item-precio">$'+monto(precioEfectivo(p))+' c/u'+(entrada.cantidad>1 ? ' · $'+monto(precioEfectivo(p)*entrada.cantidad)+' subtotal' : '')+'</div>' : ''))+
       '</div>'+
       '<div class="lista-item-qty">'+
         '<button class="qty-btn" data-id="'+escaparHTML(p.producto_id)+'" data-delta="-1" aria-label="Restar">−</button>'+
@@ -1098,8 +1171,11 @@ function renderListaContenido(){
     filaTotal.style.display = 'none';
   }
 
-  const btnCP2 = document.getElementById('btnConfirmarPedido');
-  if(btnCP2) btnCP2.disabled = false;
+  // El pedido nunca se puede confirmar con productos sin stock en el
+  // carrito — igual pueden seguir en la lista para "Solo consultar".
+  const hayAgotados = carritoTieneAgotados();
+  avisoAgotados.classList.toggle('visible', hayAgotados && !!btnConfirmarPedido);
+  if(btnConfirmarPedido) btnConfirmarPedido.disabled = hayAgotados;
   document.getElementById('btnEnviarDesdeLista').disabled = false;
 }
 
@@ -1110,7 +1186,8 @@ function textoResumenPedido_(){
   const lineas = entradas.map(function(entrada){
     const p = entrada.producto;
     let linea = '- '+entrada.cantidad+'x '+formatearNombreProducto(p.nombre) + (p.marca_nombre ? ' ('+p.marca_nombre+')' : '');
-    if(mostrarPrecio) linea += ' — $'+monto(precioEfectivo(p)*entrada.cantidad);
+    if(estaAgotado(p)) linea += ' [SIN STOCK — a confirmar disponibilidad]';
+    else if(mostrarPrecio) linea += ' — $'+monto(precioEfectivo(p)*entrada.cantidad);
     return linea;
   });
   let texto = lineas.join('\n');
@@ -1129,7 +1206,10 @@ function enviarConsultaWhatsapp(productosForzados){
   if(productosForzados){
     const mostrarPrecio = negocio.mostrar_precios !== false;
     cuerpo = productosForzados.map(function(p){
-      return '- '+formatearNombreProducto(p.nombre) + (p.marca_nombre ? ' ('+p.marca_nombre+')' : '') + (mostrarPrecio ? ' — $'+monto(precioEfectivo(p)) : '');
+      let linea = '- '+formatearNombreProducto(p.nombre) + (p.marca_nombre ? ' ('+p.marca_nombre+')' : '');
+      if(estaAgotado(p)) linea += ' [SIN STOCK — a confirmar disponibilidad]';
+      else if(mostrarPrecio) linea += ' — $'+monto(precioEfectivo(p));
+      return linea;
     }).join('\n');
   } else {
     if(!carrito.size){ alert('Agregá al menos un producto a tu lista.'); return; }
@@ -1148,10 +1228,19 @@ function enviarConsultaWhatsapp(productosForzados){
 // así que el pedido se arma igual y se manda por WhatsApp como
 // confirmación real — pero el payload ya queda armado en el formato
 // que va a necesitar el backend el día que se conecte.
+//
+// abrirCheckout() nunca se llama con productos agotados en el carrito —
+// btnConfirmarPedido queda disabled mientras haya alguno (ver
+// renderListaContenido) — pero se vuelve a chequear acá también, por si
+// alguien reabre el checkout con el carrito ya abierto en otra pestaña.
 // ═══════════════════════════════════════════════════════════
 
 function abrirCheckout(){
   if(!carrito.size) return;
+  if(carritoTieneAgotados()){
+    alert('Hay productos sin stock en tu carrito — sacalos para poder confirmar el pedido, o usá "Solo consultar".');
+    return;
+  }
   const negocio = (CATALOGO && CATALOGO.negocio) || {};
   metodoPagoElegido = 'efectivo';
   comprobanteBase64 = null;
@@ -1276,6 +1365,12 @@ async function enviarPedidoAlERP_(payload){
 }
 
 async function confirmarPedido_(){
+  if(carritoTieneAgotados()){
+    document.getElementById('checkoutMensaje').className = 'msg error';
+    document.getElementById('checkoutMensaje').textContent = 'Hay productos sin stock en tu carrito — sacalos para poder confirmar.';
+    return;
+  }
+
   const nombre = document.getElementById('ckNombre').value.trim();
   const telefono = document.getElementById('ckTelefono').value.trim();
   const notas = document.getElementById('ckNotas').value.trim();
