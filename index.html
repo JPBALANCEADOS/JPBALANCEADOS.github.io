@@ -500,8 +500,7 @@ function pintarEstado(icono, titulo, texto, mostrarReintentar){
 // "entretener" mientras se piden los 4 recursos (catalogo/precios/stock/
 // negocio), que en conjunto suelen tardar varios segundos.
 const FRASES_CARGA = [
-  'En este catálogo vas a encontrar los mejores precios y envíos.',
-  'Este catálogo es un producto de JPSISTEMA.',
+  'Este catálogo es un producto de © JPSistema.',
 ];
 
 let cargaTypewriterActivo = false;
@@ -834,7 +833,7 @@ function renderPagina(){
         '</div>'+
         (numeroWa ? '<a class="pie-whatsapp" href="https://wa.me/'+numeroWa+'" target="_blank" rel="noopener">'+iconoImg('whatsapp')+' Escribinos por WhatsApp</a>' : '')+
       '</div>'+
-      '<div class="pie-plataforma">Catálogo creado con JPSistema</div>'+
+      '<div class="pie-plataforma">Catálogo creado con © JPSistema</div>'+
     '</footer>'+
     '<div id="barraConsulta" class="barra-consulta">'+
       '<span class="barra-consulta-texto" id="btnVerLista" role="button" tabindex="0">'+iconoImg('lista')+'<strong id="contadorConsulta">0</strong> en tu lista — ver</span>'+
