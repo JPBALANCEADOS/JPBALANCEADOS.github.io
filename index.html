@@ -57,37 +57,39 @@ a{color:inherit;}
 
 /* ── Pantalla de carga inicial (typewriter): distrae mientras se piden
    los 4 recursos (catalogo/precios/stock/negocio) que suelen tardar
-   varios segundos ── */
+   varios segundos. Fondo blanco y logo de JPSistema, en línea con el
+   estilo de la landing. ── */
 .pantalla-carga{
   position:relative;
   min-height:100vh;
   overflow:hidden;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;
-  background:linear-gradient(155deg,var(--marca-oscura),var(--marca) 55%,var(--marca-clara));
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;
+  background:#fff;
   padding:0 28px;text-align:center;
 }
 .carga-logo{
-  width:112px;height:112px;border-radius:50%;
+  width:150px;height:150px;border-radius:50%;
   background:#fff;
-  box-shadow:0 12px 30px -8px rgba(0,0,0,.35);
+  border:1px solid var(--borde);
+  box-shadow:var(--sombra-md);
   display:flex;align-items:center;justify-content:center;
-  padding:20px;
-  animation:pulso-logo 2.4s ease-in-out infinite;
+  padding:26px;
+  animation:pulso-logo 2s ease-in-out infinite;
   overflow:hidden;
 }
 .carga-logo img{width:100%;height:100%;object-fit:contain;}
 @keyframes pulso-logo{
-  0%,100%{transform:scale(1);box-shadow:0 12px 30px -8px rgba(0,0,0,.35);}
-  50%{transform:scale(1.045);box-shadow:0 16px 38px -6px rgba(0,0,0,.4);}
+  0%,100%{transform:scale(1);box-shadow:var(--sombra-md);}
+  50%{transform:scale(1.07);box-shadow:0 16px 36px -6px rgba(45,106,79,.28);}
 }
 .carga-texto{
-  max-width:320px;min-height:52px;
-  font-size:1.05rem;font-weight:600;color:#fff;line-height:1.45;
+  max-width:320px;min-height:30px;
+  font-size:1.05rem;font-weight:700;color:var(--carbon);line-height:1.45;
 }
-.carga-cursor{display:inline-block;width:2px;height:1em;background:#fff;margin-left:2px;vertical-align:-2px;animation:parpadeo-cursor .8s step-end infinite;}
+.carga-cursor{display:inline-block;width:2px;height:1em;background:var(--marca);margin-left:2px;vertical-align:-2px;animation:parpadeo-cursor .8s step-end infinite;}
 @keyframes parpadeo-cursor{50%{opacity:0;}}
-.carga-progreso{width:120px;height:3px;border-radius:999px;background:rgba(255,255,255,.22);overflow:hidden;}
-.carga-progreso span{display:block;width:40%;height:100%;border-radius:999px;background:#fff;animation:avanzar-progreso 1.3s ease-in-out infinite;}
+.carga-progreso{width:120px;height:3px;border-radius:999px;background:var(--borde);overflow:hidden;}
+.carga-progreso span{display:block;width:40%;height:100%;border-radius:999px;background:var(--marca);animation:avanzar-progreso 1.3s ease-in-out infinite;}
 @keyframes avanzar-progreso{
   0%{transform:translateX(-100%);}
   100%{transform:translateX(350%);}
@@ -203,10 +205,6 @@ header.marca{background:var(--marca);color:#fff;}
 .ficha-miniaturas button.activa{opacity:1;border-color:var(--marca);}
 .ficha-miniaturas img{width:100%;height:100%;object-fit:contain;}
 
-/* Desktop: dos columnas — imagen fija a la izquierda, info a la derecha.
-   Va DESPUÉS de las reglas base de .ficha-hero para poder pisarlas
-   (misma especificidad — si quedara antes en el archivo, la regla base
-   la pisaría a ella en vez de al revés). */
 @media (min-width:860px){
   .hoja-ficha{max-width:900px;}
   .ficha-cuerpo{display:grid;grid-template-columns:360px 1fr;gap:26px;align-items:start;}
@@ -233,8 +231,6 @@ header.marca{background:var(--marca);color:#fff;}
 .ficha-seccion h3{font-size:.7rem;color:var(--carbon-60);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;}
 .ficha-seccion p{font-size:.88rem;color:var(--carbon);white-space:pre-line;}
 
-/* "También te puede interesar" — mismas tarjetas que la grilla principal,
-   en una fila que se scrollea horizontalmente. */
 .scroll-desvanecido{position:relative;}
 .scroll-desvanecido .relacionados-fila{-webkit-mask-image:linear-gradient(to right,transparent,#000 18px,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(to right,transparent,#000 18px,#000 calc(100% - 28px),transparent);}
 .relacionados-fila{display:flex;gap:12px;overflow-x:auto;padding:4px 2px 10px;scroll-snap-type:x proximity;}
@@ -324,14 +320,6 @@ header.marca{background:var(--marca);color:#fff;}
 <div id="raiz"></div>
 
 <script>
-// ── Config: cómo este frontend único sabe de qué cliente es el catálogo ──
-//
-// Modo 1 (producción): la URL pública es catalogo.jpbalanceados.com/petshopjuan
-// GitHub Pages redirige eso a /?cliente=petshopjuan (ver 404.html), y acá
-// le preguntamos al proyecto central "¿cuál es el catálogo de petshopjuan?"
-//
-// Modo 2 (prueba rápida, sin depender del directorio): pasar directamente
-// ?api=<url del endpoint del cliente>, salteando la resolución por slug.
 const DIRECTORIO_URL = 'https://script.google.com/macros/s/AKfycbyDDyVLAvh3HbG9S4Ot_txcKS3Uj2qhdxxiITePNICvKH8HcsfgTxwUi-8iZUM3ltDqpw/exec';
 
 const params = new URLSearchParams(location.search);
@@ -340,8 +328,8 @@ const CLIENTE_SLUG = params.get('cliente') || '';
 
 let CATALOGO = null;
 let productosActuales = [];
-let carrito = new Map(); // producto_id -> { producto, cantidad }
-let metodoPagoElegido = 'efectivo'; // 'efectivo' | 'transferencia'
+let carrito = new Map();
+let metodoPagoElegido = 'efectivo';
 let comprobanteBase64 = null;
 let comprobanteMimeType = '';
 let filtroTexto = '';
@@ -352,9 +340,6 @@ let ordenActual = 'relevancia';
 let claveAlmacenamiento = '';
 let ultimoFocoAntesDeOverlay = null;
 
-// ── Set de íconos SVG en línea (currentColor → heredan el color del
-// texto/botón). Reemplazan los emojis: se ven iguales en cualquier
-// dispositivo/SO y dan una terminación más prolija/comercial. ──
 const ICN = {
   buscar: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
   compartir: '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.5" x2="15.4" y2="6.5"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/></svg>',
@@ -385,13 +370,9 @@ function estrellasTexto(v){
   let s=''; for(let i=1;i<=5;i++) s += i<=v ? '★' : '☆';
   return s;
 }
-// Varios nombres vienen armados como "Marca/Especie/-/Etapa/-/Peso" sin
-// espacio alrededor de la barra — eso además de leerse mal, al no tener
-// puntos de corte, empuja el ancho de la tarjeta. Acá solo se cambia
-// cómo se MUESTRA, no el dato real.
 function formatearNombreProducto(nombre){
   return String(nombre||'')
-    .replace(/\s*\/\s*-?\s*\/\s*/g, ' / ')  // colapsa tramos vacíos tipo "/-/"
+    .replace(/\s*\/\s*-?\s*\/\s*/g, ' / ')
     .replace(/\/(?!\s)/g, ' / ')
     .replace(/\s+/g, ' ')
     .trim();
@@ -399,9 +380,6 @@ function formatearNombreProducto(nombre){
 function precioEfectivo(p){ return (p.oferta && p.precio_oferta) ? p.precio_oferta : p.precio; }
 function etapaDe(p){ return p.edad_etaria_canonica || p.ali_edad_etaria || ''; }
 
-// stock null/undefined = no hay dato (no se pidió o no está esa fila en
-// stock.json) → NO se considera agotado, para no ocultar por falta de
-// info. Solo se considera agotado cuando el número es <= 0 de verdad.
 function estaAgotado(p){ return p.stock !== null && p.stock !== undefined && Number(p.stock) <= 0; }
 function puedeConsultarse(p){
   if(!estaAgotado(p)) return true;
@@ -409,8 +387,6 @@ function puedeConsultarse(p){
   return negocio.permitir_consultar_sin_stock !== false;
 }
 
-// Instagram/TikTok se cargan a veces como "@usuario" en vez de URL — esto
-// arma el link correcto en cualquiera de los dos casos.
 function normalizarLinkRed_(valor, red){
   const v = String(valor||'').trim();
   if(/^https?:\/\//i.test(v)) return v;
@@ -430,10 +406,6 @@ function imagenConFallback(url, alt){
     'onerror="var s=this.previousElementSibling;if(s&&s.classList.contains(\'spinner-imagen\'))s.remove();this.replaceWith(Object.assign(document.createElement(\'span\'),{className:\'sin-imagen\',innerHTML:ICN.pata}))">';
 }
 
-// Tarjeta de producto — se usa tanto en la grilla principal como en
-// "También te puede interesar" dentro de la ficha, para que se vean
-// exactamente iguales y el click (abrir / agregar a la lista) funcione
-// en los dos lugares sin código repetido.
 function htmlTarjetaProducto(p){
   const negocio = (CATALOGO && CATALOGO.negocio) || {};
   const enLista = carrito.has(p.producto_id);
@@ -494,12 +466,18 @@ function pintarEstado(icono, titulo, texto, mostrarReintentar){
     '</div>';
 }
 
-// Frases del typewriter de la pantalla de carga inicial — pensadas para
-// "entretener" mientras se piden los 4 recursos (catalogo/precios/stock/
+// URL del logo de JPSistema (mismo repo que usa la landing) — se muestra
+// pulsando, grande, en la pantalla de carga, como sello de "hecho con
+// JPSistema" en línea con el estilo de la landing (fondo blanco).
+const LOGO_JPSISTEMA = 'https://raw.githubusercontent.com/JPBALANCEADOS/jpgestion-sistema/main/img/logo.png';
+
+// Frases del typewriter de la pantalla de carga inicial: primero avisa
+// que está cargando, después se borra y firma como producto JPSistema —
+// en loop, mientras se piden los 4 recursos (catalogo/precios/stock/
 // negocio), que en conjunto suelen tardar varios segundos.
 const FRASES_CARGA = [
-  'En este catálogo vas a encontrar los mejores precios y envíos.',
-  'Este catálogo es un producto de JPSISTEMA.',
+  'Cargando catálogo',
+  'Es un producto de JPSistema',
 ];
 
 let cargaTypewriterActivo = false;
@@ -508,7 +486,7 @@ function pintarCargando(){
   cargaTypewriterActivo = true;
   document.getElementById('raiz').innerHTML =
     '<div class="pantalla-carga">'+
-      '<div class="carga-logo"><img src="img/logo.png" alt="JPSistema"></div>'+
+      '<div class="carga-logo"><img src="'+LOGO_JPSISTEMA+'" alt="JPSistema"></div>'+
       '<p class="carga-texto"><span id="cargaTextoTyped"></span><span class="carga-cursor"></span></p>'+
       '<div class="carga-progreso"><span></span></div>'+
     '</div>';
@@ -556,9 +534,6 @@ function iniciarTypewriterCarga_(){
   escribir();
 }
 
-// Favicon dinámico: como este mismo HTML sirve a cientos de comercios,
-// no hay un ícono fijo posible — se arma en tiempo real con el logo del
-// negocio apenas se conoce.
 function actualizarFavicon(url){
   if(!url) return;
   let link = document.querySelector('link[rel="icon"]');
@@ -566,16 +541,12 @@ function actualizarFavicon(url){
   link.href = url;
 }
 
-// ── Persistencia del carrito (localStorage, por catálogo) ──
 function cargarListaGuardada(){
   if(!claveAlmacenamiento) return;
   try{
     const raw = localStorage.getItem(claveAlmacenamiento);
     if(!raw) return;
     const guardado = JSON.parse(raw);
-    // Formato viejo (antes del carrito con cantidades) era un array de
-    // ids solamente — lo seguimos leyendo para no perder el carrito de
-    // alguien que ya lo tenía guardado, asumiendo cantidad 1.
     const entradas = Array.isArray(guardado)
       ? guardado.map(function(id){ return [id, 1]; })
       : Object.entries(guardado || {});
@@ -583,7 +554,7 @@ function cargarListaGuardada(){
       const p = CATALOGO.productos.find(function(x){ return x.producto_id===par[0]; });
       if(p) carrito.set(par[0], { producto: p, cantidad: Math.max(1, Number(par[1])||1) });
     });
-  }catch(e){ /* si está corrupto, arrancamos con el carrito vacío */ }
+  }catch(e){}
 }
 function guardarListaEnStorage(){
   if(!claveAlmacenamiento) return;
@@ -594,11 +565,6 @@ function guardarListaEnStorage(){
   }catch(e){}
 }
 
-// Convierte un producto tal como viene de catalogo.json (nombres de
-// campo nuevos: id, marca, categoria, especie, etapa, imagen, galeria,
-// estrellas, peso) a la forma interna que ya usa el resto de este
-// archivo (producto_id, marca_nombre, etc.) — así el resto del código
-// (filtros, tarjetas, ficha, relacionados) no tiene que tocarse.
 function normalizarProductoCatalogo_(p){
   return {
     producto_id: String(p.id),
@@ -622,15 +588,11 @@ function normalizarProductoCatalogo_(p){
     precio_oferta: Number(p.precio_oferta || 0),
     estrella: p.estrellas != null ? Number(p.estrellas) : null,
     etiquetas_producto: p.etiquetas || [],
-    precio: 0,   // se completa con precios.json
-    stock: null, // se completa con stock.json (null = no hay dato)
+    precio: 0,
+    stock: null,
   };
 }
 
-// Pide uno de los 4 recursos (?catalogo=1&recurso=X). Nunca tira: si
-// falla o el recurso todavía no fue publicado, devuelve null — así que
-// solo catalogo.json es "obligatorio" para poder mostrar algo; que
-// falten precios/stock/negocio no tira abajo toda la página.
 async function fetchRecurso_(base, recurso){
   try{
     const sep = base.indexOf('?') === -1 ? '?' : '&';
@@ -664,18 +626,9 @@ async function iniciar(){
     }
   }
 
-  // API_URL puede venir con query ya puesta (?catalogo=1, ?catalogo=1&recurso=...,
-  // etc. según de dónde salió) — nos quedamos solo con la base y armamos
-  // nosotros los 4 pedidos, así no importa el shape exacto de lo que
-  // devolvió el directorio central o el ?api= de prueba.
   const base = API_URL.split('?')[0];
 
   try{
-    // Los 4 recursos se piden siempre, sin condicionar a mostrar_stock:
-    // aunque el negocio no quiera EXHIBIR el número de stock, igual lo
-    // necesitamos para poder filtrar los agotados, ordenarlos al final,
-    // y bloquear el botón de pedir — mostrar_stock solo decide si el
-    // número se ve en la tarjeta/ficha, no si el dato se usa internamente.
     const [datosCatalogo, datosPrecios, datosStock, datosNegocio] = await Promise.all([
       fetchRecurso_(base, 'catalogo'),
       fetchRecurso_(base, 'precios'),
@@ -954,8 +907,6 @@ function aplicarFiltros(){
     });
   }
 
-  // Los agotados siempre van al final, sin importar el orden elegido —
-  // se antepone esa comparación a la lógica de cada modo.
   if(ordenActual === 'precio_asc'){
     lista.sort(function(a,b){
       const agA=estaAgotado(a), agB=estaAgotado(b); if(agA!==agB) return agA?1:-1;
@@ -972,8 +923,6 @@ function aplicarFiltros(){
       return (b.estrella||0)-(a.estrella||0);
     });
   } else {
-    // Relevancia (orden por defecto): 1) ofertas, 2) destacados, 3) mejor
-    // calificados, 4) el resto.
     lista.sort(function(a,b){
       const agA=estaAgotado(a), agB=estaAgotado(b); if(agA!==agB) return agA?1:-1;
       if(!!b.oferta !== !!a.oferta) return b.oferta ? 1 : -1;
@@ -1026,9 +975,6 @@ function toggleConsulta(id){
   renderBarraConsulta();
   const enLista = carrito.has(id);
   const agotado = estaAgotado(producto);
-  // La grilla principal ya se re-renderiza entera (renderGrid), pero las
-  // tarjetas de "también te puede interesar" dentro de la ficha abierta
-  // no forman parte de ese render — se actualizan acá directamente.
   document.querySelectorAll('.card-btn-agregar[data-id="'+CSS.escape(id)+'"]').forEach(function(btn){
     btn.classList.toggle('en-lista', enLista);
     btn.textContent = enLista ? '✓ En tu lista' : (agotado ? '+ Consultar disponibilidad' : '+ Agregar a la lista');
@@ -1071,9 +1017,6 @@ function renderBarraConsulta(){
   barra.classList.toggle('visible', items>0);
 }
 
-// "También te puede interesar" — prioriza misma especie, etapa, marca y
-// rango de precio similar (±35%), y dentro de eso ordena ofertas primero,
-// después destacados, después por puntaje de similitud y calificación.
 function productosRelacionados(p){
   const precioP = precioEfectivo(p);
   const etapaP = etapaDe(p);
@@ -1161,8 +1104,6 @@ function abrirFicha(id){
     : '<button class="btn btn-fantasma" id="btnFichaAgregar" data-id="'+escaparHTML(id)+'">'+(enLista?'✓ En tu lista':(agotado?'+ Consultar disponibilidad':'+ Agregar a mi lista'))+'</button>'+
       '<button class="btn btn-primario" id="btnFichaWhatsapp">'+iconoImg('whatsapp')+'Consultar por WhatsApp</button>';
 
-  // Estructura pedida: imagen, marca, nombre, calificación, precio,
-  // botones de acción, descripción, ingredientes, información nutricional.
   const infoHtml =
     '<div class="ficha-info">'+
       '<div class="ficha-marca">'+escaparHTML(p.marca_nombre)+'</div>'+
@@ -1268,8 +1209,6 @@ function renderListaContenido(){
     filaTotal.style.display = 'none';
   }
 
-  // El pedido nunca se puede confirmar con productos sin stock en el
-  // carrito — igual pueden seguir en la lista para "Solo consultar".
   const hayAgotados = carritoTieneAgotados();
   avisoAgotados.classList.toggle('visible', hayAgotados && !!btnConfirmarPedido);
   if(btnConfirmarPedido) btnConfirmarPedido.disabled = hayAgotados;
@@ -1318,19 +1257,10 @@ function enviarConsultaWhatsapp(productosForzados){
   window.open(url, '_blank');
 }
 
-// ═══════════════════════════════════════════════════════════
-// CHECKOUT — datos del cliente, método de pago, comprobante.
-// enviarPedidoAlERP_() es el enchufe para cuando esté la integración
-// con el backend (doPost + PedidosPendientes). Hoy no existe todavía,
-// así que el pedido se arma igual y se manda por WhatsApp como
-// confirmación real — pero el payload ya queda armado en el formato
-// que va a necesitar el backend el día que se conecte.
-//
-// abrirCheckout() nunca se llama con productos agotados en el carrito —
-// btnConfirmarPedido queda disabled mientras haya alguno (ver
-// renderListaContenido) — pero se vuelve a chequear acá también, por si
-// alguien reabre el checkout con el carrito ya abierto en otra pestaña.
-// ═══════════════════════════════════════════════════════════
+async function enviarPedidoAlERP_(payload){
+  console.log('Pedido armado (todavía sin conexión al ERP):', payload);
+  return { ok: false, fallback: true };
+}
 
 function abrirCheckout(){
   if(!carrito.size) return;
@@ -1452,15 +1382,6 @@ function manejarArchivoComprobante_(event){
   lector.readAsDataURL(archivo);
 }
 
-// Enchufe para la integración con el ERP (doPost + PedidosPendientes).
-// Hoy no hay backend del otro lado, así que devuelve un fallback — pero
-// el payload ya sale armado en la forma que va a necesitar ese endpoint,
-// para no tener que retocar esta parte cuando se conecte.
-async function enviarPedidoAlERP_(payload){
-  console.log('Pedido armado (todavía sin conexión al ERP):', payload);
-  return { ok: false, fallback: true };
-}
-
 async function confirmarPedido_(){
   if(carritoTieneAgotados()){
     document.getElementById('checkoutMensaje').className = 'msg error';
@@ -1503,15 +1424,10 @@ async function confirmarPedido_(){
   const resultado = await enviarPedidoAlERP_(payload);
 
   if(resultado.ok){
-    // Camino real, cuando exista la integración: el pedido ya quedó
-    // pendiente en el ERP. Por ahora nunca entra acá.
     mostrarConfirmacionPedido_();
     return;
   }
 
-  // Fallback de hoy: todavía no hay backend, así que la confirmación
-  // real sigue siendo WhatsApp — pero con todo el detalle del pedido
-  // armado (cliente, cantidades, método de pago elegido).
   let texto = 'Hola! Quiero confirmar el siguiente pedido:\n\n';
   texto += textoResumenPedido_();
   texto += '\n\nNombre: '+nombre+'\nTeléfono: '+telefono;
