@@ -15,6 +15,7 @@
 :root{
   --marca:#2D6A4F;
   --marca-oscura:#1F4D38;
+  --marca-clara:#3F8564;
   --marca-pale:#E4F0EA;
   --hueso:#F6F5F1;
   --carbon:#1A1D1B;
@@ -48,12 +49,51 @@ a{color:inherit;}
 .estado-pantalla p{font-size:14px;max-width:360px;}
 .estado-pantalla .btn{margin-top:6px;padding:0 20px;height:42px;}
 
-/* ── Pantalla de carga inicial: simple, blanca, con spinner y texto ── */
-.pantalla-carga{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#fff;color:var(--carbon-60);font-size:.95rem;font-weight:600;}
+/* ── Pantalla de carga inicial: solo para imágenes de producto, con spinner ── */
 .spinner{width:22px;height:22px;border:3px solid var(--borde);border-top-color:var(--marca);border-radius:50%;animation:girar-spinner .7s linear infinite;}
 .spinner-grande{width:38px;height:38px;border-width:4px;}
 .spinner-imagen{position:absolute;inset:0;margin:auto;width:18px;height:18px;border-width:2.5px;z-index:2;}
 @keyframes girar-spinner{to{transform:rotate(360deg);}}
+
+/* ── Pantalla de carga inicial (typewriter): distrae mientras se piden
+   los 4 recursos (catalogo/precios/stock/negocio) que suelen tardar
+   varios segundos. Mismo look de la landing: fondo blanco, tipografía
+   Segoe UI, acento verde/dorado ── */
+.pantalla-carga{
+  position:relative;
+  min-height:100vh;
+  overflow:hidden;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;
+  background:#FAFAF9;
+  padding:0 28px;text-align:center;
+  font-family:'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+.carga-logo{
+  width:150px;height:150px;
+  display:flex;align-items:center;justify-content:center;
+  animation:pulso-logo 2.4s ease-in-out infinite;
+}
+.carga-logo img{
+  width:100%;height:100%;object-fit:contain;
+  border-radius:16px;
+  box-shadow:0 16px 38px -14px rgba(23,23,21,.28);
+}
+@keyframes pulso-logo{
+  0%,100%{transform:scale(1);}
+  50%{transform:scale(1.045);}
+}
+.carga-texto{
+  max-width:320px;min-height:52px;
+  font-size:1.05rem;font-weight:600;color:#171715;line-height:1.45;
+}
+.carga-cursor{display:inline-block;width:2px;height:1em;background:#2D6A4F;margin-left:2px;vertical-align:-2px;animation:parpadeo-cursor .8s step-end infinite;}
+@keyframes parpadeo-cursor{50%{opacity:0;}}
+.carga-progreso{width:120px;height:3px;border-radius:999px;background:#E4E3DE;overflow:hidden;}
+.carga-progreso span{display:block;width:40%;height:100%;border-radius:999px;background:#2D6A4F;animation:avanzar-progreso 1.3s ease-in-out infinite;}
+@keyframes avanzar-progreso{
+  0%{transform:translateX(-100%);}
+  100%{transform:translateX(350%);}
+}
 
 /* ── Header / portada ── */
 header.marca{background:var(--marca);color:#fff;}
@@ -103,23 +143,6 @@ header.marca{background:var(--marca);color:#fff;}
 
 /* ── Grid de productos ── */
 .contenido{max-width:820px;margin:0 auto;padding:20px 16px 10px;}
-
-/* ── Layout ancho (desktop grande): grilla a la izquierda, carrito
-   siempre visible a la derecha, en vez de una sola columna centrada con
-   espacio vacío a los costados. El carrito flotante + modal siguen
-   existiendo para pantallas angostas — el lateral es un AGREGADO, no un
-   reemplazo, y ambos quedan sincronizados con el mismo estado. ── */
-.layout-desktop{max-width:1400px;margin:0 auto;}
-.carrito-lateral{display:none;}
-@media (min-width:1140px){
-  .layout-desktop{display:grid;grid-template-columns:1fr 320px;gap:24px;align-items:start;padding:0 16px;}
-  .layout-desktop .contenido{max-width:none;margin:0;padding:20px 0 10px;}
-  .carrito-lateral{display:block;position:sticky;top:16px;margin-top:20px;background:#fff;border:1px solid var(--borde);border-radius:var(--radio);padding:16px;max-height:calc(100vh - 32px);overflow-y:auto;}
-  .carrito-lateral h2{font-size:1rem;margin-bottom:10px;}
-  /* La barra flotante de "Solo consultar" queda redundante si el
-     carrito ya está siempre visible al costado. */
-  .barra-consulta{display:none!important;}
-}
 .resultado-info{font-size:.8rem;color:var(--carbon-60);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;}
 .resultado-info .link-limpiar{color:var(--marca);font-weight:700;font-size:.78rem;flex:none;}
 .grid-productos{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
@@ -465,6 +488,7 @@ function htmlTarjetaProducto(p){
 }
 
 function pintarEstado(icono, titulo, texto, mostrarReintentar){
+  detenerTypewriterCarga_();
   document.getElementById('raiz').innerHTML =
     '<div class="estado-pantalla"><div class="glifo">'+iconoImg(icono)+'</div>'+
     '<h2>'+escaparHTML(titulo)+'</h2><p>'+escaparHTML(texto)+'</p>'+
@@ -472,9 +496,66 @@ function pintarEstado(icono, titulo, texto, mostrarReintentar){
     '</div>';
 }
 
+// Frases del typewriter de la pantalla de carga inicial — pensadas para
+// "entretener" mientras se piden los 4 recursos (catalogo/precios/stock/
+// negocio), que en conjunto suelen tardar varios segundos.
+const FRASES_CARGA = [
+  'En este catálogo vas a encontrar los mejores precios y envíos.',
+  'Este catálogo es un producto de JPSISTEMA.',
+];
+
+let cargaTypewriterActivo = false;
+
 function pintarCargando(){
+  cargaTypewriterActivo = true;
   document.getElementById('raiz').innerHTML =
-    '<div class="pantalla-carga"><span class="spinner spinner-grande"></span><p>Cargando catálogo…</p></div>';
+    '<div class="pantalla-carga">'+
+      '<div class="carga-logo"><img src="img/logo.png" alt="JPSistema"></div>'+
+      '<p class="carga-texto"><span id="cargaTextoTyped"></span><span class="carga-cursor"></span></p>'+
+      '<div class="carga-progreso"><span></span></div>'+
+    '</div>';
+  iniciarTypewriterCarga_();
+}
+
+function detenerTypewriterCarga_(){
+  cargaTypewriterActivo = false;
+}
+
+function iniciarTypewriterCarga_(){
+  const el = document.getElementById('cargaTextoTyped');
+  if(!el) return;
+
+  let indiceFrase = 0;
+  let i = 0;
+  const velocidadEscritura = 42;
+  const velocidadBorrado = 18;
+  const pausaAlTerminar = 1400;
+  const pausaAntesDeEscribir = 300;
+
+  function escribir(){
+    if(!cargaTypewriterActivo || !document.getElementById('cargaTextoTyped')) return;
+    const frase = FRASES_CARGA[indiceFrase];
+    if(i <= frase.length){
+      el.textContent = frase.slice(0, i);
+      i++;
+      setTimeout(escribir, velocidadEscritura);
+    } else {
+      setTimeout(borrar, pausaAlTerminar);
+    }
+  }
+  function borrar(){
+    if(!cargaTypewriterActivo || !document.getElementById('cargaTextoTyped')) return;
+    const frase = FRASES_CARGA[indiceFrase];
+    if(i >= 0){
+      el.textContent = frase.slice(0, i);
+      i--;
+      setTimeout(borrar, velocidadBorrado);
+    } else {
+      indiceFrase = (indiceFrase + 1) % FRASES_CARGA.length;
+      setTimeout(escribir, pausaAntesDeEscribir);
+    }
+  }
+  escribir();
 }
 
 // Favicon dinámico: como este mismo HTML sirve a cientos de comercios,
@@ -670,6 +751,7 @@ function contarDestacados(){
 }
 
 function renderPagina(){
+  detenerTypewriterCarga_();
   const negocio = CATALOGO.negocio || {};
   const colorMarca = negocio.color || '#2D6A4F';
   document.documentElement.style.setProperty('--marca', colorMarca);
@@ -730,24 +812,10 @@ function renderPagina(){
       '<div id="chipsEspecie" class="chips-fila">'+chipsEspecie+'</div>'+
       '<div id="chipsEtapa" class="chips-fila">'+chipsEtapa+'</div>'+
     '</div></div>'+
-    '<div class="layout-desktop">'+
     '<main class="contenido">'+
       '<div id="resultadoInfo" class="resultado-info"></div>'+
       '<div id="grid" class="grid-productos"></div>'+
     '</main>'+
-    '<aside id="carritoLateral" class="carrito-lateral">'+
-      '<h2>Tu carrito</h2>'+
-      '<div id="listaContenidoLateral"></div>'+
-      '<div id="listaAvisoAgotadosLateral" class="lista-aviso-agotados">Sacá los productos sin stock del carrito para poder confirmar el pedido — podés usar "Solo consultar" mientras tanto.</div>'+
-      '<div id="listaTotalFilaLateral" class="lista-total-fila">'+
-        '<span>Total</span><strong id="listaTotalValorLateral">$0</strong>'+
-      '</div>'+
-      '<div class="ficha-botones" style="margin-top:12px">'+
-        '<button class="btn btn-fantasma" id="btnEnviarDesdeListaLateral">'+iconoImg('whatsapp')+'Solo consultar</button>'+
-        (negocio.acepta_pedidos ? '<button class="btn btn-primario" id="btnConfirmarPedidoLateral">Confirmar pedido</button>' : '')+
-      '</div>'+
-    '</aside>'+
-    '</div>'+
     '<footer class="pie">'+
       '<div class="pie-inner">'+
         '<div class="pie-marca">'+
@@ -850,12 +918,6 @@ function renderPagina(){
   document.getElementById('btnCerrarCheckout').addEventListener('click', cerrarCheckout);
   document.getElementById('overlayCheckout').addEventListener('click', function(e){ if(e.target===this) cerrarCheckout(); });
 
-  // Carrito lateral (pantallas anchas) — mismas acciones que el modal,
-  // solo que siempre visible en vez de tener que abrirlo.
-  document.getElementById('btnEnviarDesdeListaLateral').addEventListener('click', function(){ enviarConsultaWhatsapp(); });
-  const btnConfirmarPedidoLateral = document.getElementById('btnConfirmarPedidoLateral');
-  if(btnConfirmarPedidoLateral) btnConfirmarPedidoLateral.addEventListener('click', abrirCheckout);
-
   if(numeroWa){
     document.getElementById('btnWhatsappHeader').addEventListener('click', function(){
       const texto = (negocio.mensaje_whatsapp && negocio.mensaje_whatsapp.trim())
@@ -879,7 +941,6 @@ function renderPagina(){
   });
 
   renderBarraConsulta();
-  renderListaContenido();
   aplicarFiltros();
 }
 
