@@ -15,6 +15,7 @@
 :root{
   --marca:#2D6A4F;
   --marca-oscura:#1F4D38;
+  --marca-clara:#3F8564;
   --marca-pale:#E4F0EA;
   --hueso:#F6F5F1;
   --carbon:#1A1D1B;
@@ -48,12 +49,52 @@ a{color:inherit;}
 .estado-pantalla p{font-size:14px;max-width:360px;}
 .estado-pantalla .btn{margin-top:6px;padding:0 20px;height:42px;}
 
-/* ── Pantalla de carga inicial: simple, blanca, con spinner y texto ── */
-.pantalla-carga{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#fff;color:var(--carbon-60);font-size:.95rem;font-weight:600;}
+/* ── Pantalla de carga inicial: solo para imágenes de producto, con spinner ── */
 .spinner{width:22px;height:22px;border:3px solid var(--borde);border-top-color:var(--marca);border-radius:50%;animation:girar-spinner .7s linear infinite;}
 .spinner-grande{width:38px;height:38px;border-width:4px;}
 .spinner-imagen{position:absolute;inset:0;margin:auto;width:18px;height:18px;border-width:2.5px;z-index:2;}
 @keyframes girar-spinner{to{transform:rotate(360deg);}}
+
+/* ── Pantalla de carga inicial (typewriter): distrae mientras se piden
+   los 4 recursos (catalogo/precios/stock/negocio) que suelen tardar
+   varios segundos ── */
+.pantalla-carga{
+  position:relative;
+  min-height:100vh;
+  overflow:hidden;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;
+  background:linear-gradient(155deg,var(--marca-oscura),var(--marca) 55%,var(--marca-clara));
+  padding:0 28px;text-align:center;
+}
+.carga-decor{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
+.carga-decor > div{position:absolute;animation:flotar 9s ease-in-out infinite;}
+.carga-decor svg{width:100%;height:100%;fill:rgba(255,255,255,.07);}
+@keyframes flotar{0%,100%{transform:translateY(0) rotate(0deg);}50%{transform:translateY(-22px) rotate(8deg);}}
+.carga-logo{
+  width:76px;height:76px;border-radius:50%;
+  background:rgba(255,255,255,.14);
+  display:flex;align-items:center;justify-content:center;
+  animation:pulso-logo 2.1s ease-in-out infinite;
+  overflow:hidden;
+}
+.carga-logo img{width:100%;height:100%;object-fit:cover;}
+.carga-logo svg{width:38px;height:38px;fill:#fff;}
+@keyframes pulso-logo{
+  0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,255,255,.22);}
+  50%{transform:scale(1.07);box-shadow:0 0 0 14px rgba(255,255,255,0);}
+}
+.carga-texto{
+  max-width:320px;min-height:52px;
+  font-size:1.05rem;font-weight:600;color:#fff;line-height:1.45;
+}
+.carga-cursor{display:inline-block;width:2px;height:1em;background:#fff;margin-left:2px;vertical-align:-2px;animation:parpadeo-cursor .8s step-end infinite;}
+@keyframes parpadeo-cursor{50%{opacity:0;}}
+.carga-progreso{width:120px;height:3px;border-radius:999px;background:rgba(255,255,255,.22);overflow:hidden;}
+.carga-progreso span{display:block;width:40%;height:100%;border-radius:999px;background:#fff;animation:avanzar-progreso 1.3s ease-in-out infinite;}
+@keyframes avanzar-progreso{
+  0%{transform:translateX(-100%);}
+  100%{transform:translateX(350%);}
+}
 
 /* ── Header / portada ── */
 header.marca{background:var(--marca);color:#fff;}
@@ -294,7 +335,7 @@ header.marca{background:var(--marca);color:#fff;}
 //
 // Modo 2 (prueba rápida, sin depender del directorio): pasar directamente
 // ?api=<url del endpoint del cliente>, salteando la resolución por slug.
-const DIRECTORIO_URL = 'https://script.google.com/macros/s/AKfycbyDDyVLAvh3HbG9S4Ot_txcKS3Uj2qhdxxiITePNICvKH8HcsfgTxwUi-8iZUM3ltDqpw/exec';
+const DIRECTORIO_URL = 'https://script.google.com/macros/s/TU_ID_DEL_PROYECTO_CENTRAL/exec';
 
 const params = new URLSearchParams(location.search);
 let API_URL = params.get('api') || '';
@@ -448,6 +489,7 @@ function htmlTarjetaProducto(p){
 }
 
 function pintarEstado(icono, titulo, texto, mostrarReintentar){
+  detenerTypewriterCarga_();
   document.getElementById('raiz').innerHTML =
     '<div class="estado-pantalla"><div class="glifo">'+iconoImg(icono)+'</div>'+
     '<h2>'+escaparHTML(titulo)+'</h2><p>'+escaparHTML(texto)+'</p>'+
@@ -455,9 +497,72 @@ function pintarEstado(icono, titulo, texto, mostrarReintentar){
     '</div>';
 }
 
+// Frases del typewriter de la pantalla de carga inicial — pensadas para
+// "entretener" mientras se piden los 4 recursos (catalogo/precios/stock/
+// negocio), que en conjunto suelen tardar varios segundos.
+const FRASES_CARGA = [
+  'En este catálogo vas a encontrar los mejores precios y envíos.',
+  'Este catálogo es un producto de JPSISTEMA.',
+];
+
+let cargaTypewriterActivo = false;
+
 function pintarCargando(){
+  cargaTypewriterActivo = true;
   document.getElementById('raiz').innerHTML =
-    '<div class="pantalla-carga"><span class="spinner spinner-grande"></span><p>Cargando catálogo…</p></div>';
+    '<div class="pantalla-carga">'+
+      '<div class="carga-decor">'+
+        '<div style="top:12%;left:8%;width:54px;height:54px;animation-delay:0s">'+ICN.pata+'</div>'+
+        '<div style="top:68%;left:14%;width:38px;height:38px;animation-delay:1.4s">'+ICN.pata+'</div>'+
+        '<div style="top:20%;right:10%;width:46px;height:46px;animation-delay:.8s">'+ICN.pata+'</div>'+
+        '<div style="top:72%;right:8%;width:60px;height:60px;animation-delay:2.2s">'+ICN.pata+'</div>'+
+      '</div>'+
+      '<div class="carga-logo">'+ICN.pata+'</div>'+
+      '<p class="carga-texto"><span id="cargaTextoTyped"></span><span class="carga-cursor"></span></p>'+
+      '<div class="carga-progreso"><span></span></div>'+
+    '</div>';
+  iniciarTypewriterCarga_();
+}
+
+function detenerTypewriterCarga_(){
+  cargaTypewriterActivo = false;
+}
+
+function iniciarTypewriterCarga_(){
+  const el = document.getElementById('cargaTextoTyped');
+  if(!el) return;
+
+  let indiceFrase = 0;
+  let i = 0;
+  const velocidadEscritura = 42;
+  const velocidadBorrado = 18;
+  const pausaAlTerminar = 1400;
+  const pausaAntesDeEscribir = 300;
+
+  function escribir(){
+    if(!cargaTypewriterActivo || !document.getElementById('cargaTextoTyped')) return;
+    const frase = FRASES_CARGA[indiceFrase];
+    if(i <= frase.length){
+      el.textContent = frase.slice(0, i);
+      i++;
+      setTimeout(escribir, velocidadEscritura);
+    } else {
+      setTimeout(borrar, pausaAlTerminar);
+    }
+  }
+  function borrar(){
+    if(!cargaTypewriterActivo || !document.getElementById('cargaTextoTyped')) return;
+    const frase = FRASES_CARGA[indiceFrase];
+    if(i >= 0){
+      el.textContent = frase.slice(0, i);
+      i--;
+      setTimeout(borrar, velocidadBorrado);
+    } else {
+      indiceFrase = (indiceFrase + 1) % FRASES_CARGA.length;
+      setTimeout(escribir, pausaAntesDeEscribir);
+    }
+  }
+  escribir();
 }
 
 // Favicon dinámico: como este mismo HTML sirve a cientos de comercios,
@@ -653,6 +758,7 @@ function contarDestacados(){
 }
 
 function renderPagina(){
+  detenerTypewriterCarga_();
   const negocio = CATALOGO.negocio || {};
   const colorMarca = negocio.color || '#2D6A4F';
   document.documentElement.style.setProperty('--marca', colorMarca);
