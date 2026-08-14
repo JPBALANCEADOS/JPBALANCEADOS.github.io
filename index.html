@@ -677,12 +677,23 @@ async function iniciar(){
     // necesitamos para poder filtrar los agotados, ordenarlos al final,
     // y bloquear el botón de pedir — mostrar_stock solo decide si el
     // número se ve en la tarjeta/ficha, no si el dato se usa internamente.
-    const [datosCatalogo, datosPrecios, datosStock, datosNegocio] = await Promise.all([
-      fetchRecurso_(base, 'catalogo'),
-      fetchRecurso_(base, 'precios'),
-      fetchRecurso_(base, 'stock'),
-      fetchRecurso_(base, 'negocio'),
-    ]);
+   const GITHUB_BASE = 'https://raw.githubusercontent.com/JPBALANCEADOS/JPBALANCEADOS.github.io/main/data/';
+
+async function fetchJsonGitHub_(archivo) {
+  try {
+    const url = GITHUB_BASE + CLIENTE_SLUG + '/' + archivo + '?v=' + Date.now();
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (e) { return null; }
+}
+
+const [datosCatalogo, datosPrecios, datosNegocio, datosStock] = await Promise.all([
+  fetchJsonGitHub_('catalogo.json'),
+  fetchJsonGitHub_('precios.json'),
+  fetchJsonGitHub_('negocio.json'),
+  fetchRecurso_(base, 'stock'), // este es el único que sigue por Apps Script
+]);
 
     if(!datosCatalogo){
       pintarEstado('caja','Este catálogo todavía no está disponible','Volvé a intentarlo más tarde.', true);
