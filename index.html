@@ -176,8 +176,13 @@ header.marca{background:var(--marca);color:#fff;}
 .card-btn-agregar.en-lista{background:var(--marca);color:#fff;}
 .card-btn-agregar.en-lista:hover{background:var(--marca-oscura);}
 .card-btn-agregar:disabled{opacity:.5;cursor:default;background:#fff;color:var(--carbon-60);border-color:var(--borde);}
-.card-btn-comprar{margin-top:8px;padding:8px;border-radius:var(--radio-sm);border:none;background:var(--marca);color:#fff;font-size:.75rem;font-weight:700;transition:background .12s;}
+.card-fila-acciones{display:flex;gap:6px;margin-top:8px;}
+.card-btn-comprar{flex:1;padding:8px;border-radius:var(--radio-sm);border:none;background:var(--marca);color:#fff;font-size:.75rem;font-weight:700;transition:background .12s;}
 .card-btn-comprar:hover{background:var(--marca-oscura);}
+.card-btn-carrito{flex:none;width:34px;padding:0;border-radius:var(--radio-sm);border:1.5px solid var(--marca);color:var(--marca);background:#fff;font-size:1rem;font-weight:700;display:flex;align-items:center;justify-content:center;transition:background .12s,color .12s;}
+.card-btn-carrito:hover{background:var(--marca-pale);}
+.card-btn-carrito.en-lista{background:var(--marca);color:#fff;}
+.card-btn-carrito.en-lista:hover{background:var(--marca-oscura);}
 
 .vacio-grid{grid-column:1/-1;padding:48px 20px;text-align:center;color:var(--carbon-60);display:flex;flex-direction:column;align-items:center;gap:12px;}
 .vacio-grid .icono{color:var(--carbon-60);opacity:.35;}
@@ -469,7 +474,13 @@ function htmlTarjetaProducto(p){
       (enLista ? '✓ En tu lista' : '+ Consultar disponibilidad')+
     '</button>';
   } else {
-    botonHtml = '<button class="card-btn-comprar" data-id="'+escaparHTML(p.producto_id)+'">Comprar</button>';
+    // "Comprar" salta directo al checkout. El botón chico al lado suma
+    // al carrito sin salir de la página — para el que quiere pedir
+    // varias cosas y confirmar todo junto al final.
+    botonHtml = '<div class="card-fila-acciones">'+
+      '<button class="card-btn-comprar" data-id="'+escaparHTML(p.producto_id)+'">Comprar</button>'+
+      '<button class="card-btn-carrito'+(enLista?' en-lista':'')+'" data-id="'+escaparHTML(p.producto_id)+'" aria-label="'+(enLista?'Quitar del carrito':'Agregar al carrito')+'" title="'+(enLista?'Quitar del carrito':'Agregar al carrito')+'">'+(enLista?'✓':'+')+'</button>'+
+    '</div>';
   }
 
   return '<article class="card" data-id="'+escaparHTML(p.producto_id)+'">'+
@@ -1031,6 +1042,8 @@ document.getElementById('raiz').addEventListener('click', function(e){
   if(btnAbrir){ abrirFicha(btnAbrir.dataset.id); return; }
   const btnComprar = e.target.closest('.card-btn-comprar');
   if(btnComprar){ comprarAhora(btnComprar.dataset.id); return; }
+  const btnCarrito = e.target.closest('.card-btn-carrito');
+  if(btnCarrito){ toggleConsulta(btnCarrito.dataset.id); return; }
   const btnAgregar = e.target.closest('.card-btn-agregar');
   if(btnAgregar && !btnAgregar.disabled){ toggleConsulta(btnAgregar.dataset.id); return; }
 });
@@ -1050,6 +1063,12 @@ function toggleConsulta(id){
   document.querySelectorAll('.card-btn-agregar[data-id="'+CSS.escape(id)+'"]').forEach(function(btn){
     btn.classList.toggle('en-lista', enLista);
     btn.textContent = enLista ? '✓ En tu lista' : '+ Consultar disponibilidad';
+  });
+  document.querySelectorAll('.card-btn-carrito[data-id="'+CSS.escape(id)+'"]').forEach(function(btn){
+    btn.classList.toggle('en-lista', enLista);
+    btn.textContent = enLista ? '✓' : '+';
+    btn.setAttribute('aria-label', enLista ? 'Quitar del carrito' : 'Agregar al carrito');
+    btn.setAttribute('title', enLista ? 'Quitar del carrito' : 'Agregar al carrito');
   });
   const btnFicha = document.getElementById('btnFichaAgregar');
   if(btnFicha && btnFicha.dataset.id === id){
