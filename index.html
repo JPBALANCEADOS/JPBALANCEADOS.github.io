@@ -176,6 +176,8 @@ header.marca{background:var(--marca);color:#fff;}
 .card-btn-agregar.en-lista{background:var(--marca);color:#fff;}
 .card-btn-agregar.en-lista:hover{background:var(--marca-oscura);}
 .card-btn-agregar:disabled{opacity:.5;cursor:default;background:#fff;color:var(--carbon-60);border-color:var(--borde);}
+.card-btn-comprar{margin-top:8px;padding:8px;border-radius:var(--radio-sm);border:none;background:var(--marca);color:#fff;font-size:.75rem;font-weight:700;transition:background .12s;}
+.card-btn-comprar:hover{background:var(--marca-oscura);}
 
 .vacio-grid{grid-column:1/-1;padding:48px 20px;text-align:center;color:var(--carbon-60);display:flex;flex-direction:column;align-items:center;gap:12px;}
 .vacio-grid .icono{color:var(--carbon-60);opacity:.35;}
@@ -462,10 +464,12 @@ function htmlTarjetaProducto(p){
   let botonHtml;
   if(agotado && !puedeConsultar){
     botonHtml = '<button class="card-btn-agregar" disabled>Sin stock</button>';
-  } else {
+  } else if(agotado){
     botonHtml = '<button class="card-btn-agregar'+(enLista?' en-lista':'')+'" data-id="'+escaparHTML(p.producto_id)+'">'+
-      (enLista ? '✓ En tu lista' : (agotado ? '+ Consultar disponibilidad' : '+ Agregar a la lista'))+
+      (enLista ? '✓ En tu lista' : '+ Consultar disponibilidad')+
     '</button>';
+  } else {
+    botonHtml = '<button class="card-btn-comprar" data-id="'+escaparHTML(p.producto_id)+'">Comprar</button>';
   }
 
   return '<article class="card" data-id="'+escaparHTML(p.producto_id)+'">'+
@@ -1025,6 +1029,8 @@ function renderGrid(){
 document.getElementById('raiz').addEventListener('click', function(e){
   const btnAbrir = e.target.closest('.card-abrir');
   if(btnAbrir){ abrirFicha(btnAbrir.dataset.id); return; }
+  const btnComprar = e.target.closest('.card-btn-comprar');
+  if(btnComprar){ comprarAhora(btnComprar.dataset.id); return; }
   const btnAgregar = e.target.closest('.card-btn-agregar');
   if(btnAgregar && !btnAgregar.disabled){ toggleConsulta(btnAgregar.dataset.id); return; }
 });
@@ -1043,13 +1049,29 @@ function toggleConsulta(id){
   // no forman parte de ese render — se actualizan acá directamente.
   document.querySelectorAll('.card-btn-agregar[data-id="'+CSS.escape(id)+'"]').forEach(function(btn){
     btn.classList.toggle('en-lista', enLista);
-    btn.textContent = enLista ? '✓ En tu lista' : (agotado ? '+ Consultar disponibilidad' : '+ Agregar a la lista');
+    btn.textContent = enLista ? '✓ En tu lista' : '+ Consultar disponibilidad';
   });
   const btnFicha = document.getElementById('btnFichaAgregar');
   if(btnFicha && btnFicha.dataset.id === id){
-    btnFicha.textContent = enLista ? '✓ En tu lista' : (agotado ? '+ Consultar disponibilidad' : '+ Agregar a mi lista');
+    btnFicha.textContent = enLista ? '✓ En tu lista' : (agotado ? '+ Consultar disponibilidad' : '+ Agregar a la lista');
   }
   if(document.getElementById('overlayLista').classList.contains('abierto')) renderListaContenido();
+}
+
+// "Comprar" — CTA primario para el caso más común (llevar un producto
+// puntual). Agrega el producto al carrito (si no estaba) y salta directo
+// al checkout, sin pasar por la pantalla intermedia de "tu lista". Si la
+// persona ya tenía otras cosas en el carrito, se suman al mismo pedido
+// en vez de perderse.
+function comprarAhora(id){
+  const producto = CATALOGO.productos.find(function(p){ return p.producto_id===id; });
+  if(!producto || estaAgotado(producto)) return;
+  if(!carrito.has(id)) carrito.set(id, { producto: producto, cantidad: 1 });
+  guardarListaEnStorage();
+  renderGrid();
+  renderBarraConsulta();
+  if(document.getElementById('overlayFicha').classList.contains('abierto')) cerrarFicha();
+  abrirCheckout();
 }
 
 function cambiarCantidad(id, delta){
@@ -1168,10 +1190,19 @@ function abrirFicha(id){
         }).join('')+'</div>' : '')+
     '</div>';
 
+  // Comprar (CTA primario, ancho completo) + fila secundaria con
+  // "Agregar a la lista" (para el que quiere pedir varias cosas) y
+  // "Consultar por WhatsApp" (para el que solo quiere preguntar).
   const botonesHtml = (agotado && !puedeConsultar)
-    ? '<button class="btn btn-fantasma" disabled>Sin stock disponible</button>'
-    : '<button class="btn btn-fantasma" id="btnFichaAgregar" data-id="'+escaparHTML(id)+'">'+(enLista?'✓ En tu lista':(agotado?'+ Consultar disponibilidad':'+ Agregar a mi lista'))+'</button>'+
-      '<button class="btn btn-primario" id="btnFichaWhatsapp">'+iconoImg('whatsapp')+'Consultar por WhatsApp</button>';
+    ? '<button class="btn btn-fantasma" disabled style="width:100%">Sin stock disponible</button>'
+    : (agotado
+        ? '<button class="btn btn-primario" id="btnFichaAgregar" data-id="'+escaparHTML(id)+'" style="width:100%">'+(enLista?'✓ En tu lista':'+ Consultar disponibilidad')+'</button>'
+        : '<button class="btn btn-primario" id="btnFichaComprar" data-id="'+escaparHTML(id)+'" style="width:100%">Comprar ahora</button>'+
+          '<div style="display:flex;gap:8px;width:100%;margin-top:8px">'+
+            '<button class="btn btn-fantasma" id="btnFichaAgregar" data-id="'+escaparHTML(id)+'" style="flex:1">'+(enLista?'✓ En tu lista':'+ Agregar a la lista')+'</button>'+
+            '<button class="btn btn-fantasma" id="btnFichaWhatsapp" style="flex:1">'+iconoImg('whatsapp')+'Consultar</button>'+
+          '</div>'
+      );
 
   // Estructura pedida: imagen, marca, nombre, calificación, precio,
   // botones de acción, descripción, ingredientes, información nutricional.
@@ -1183,7 +1214,7 @@ function abrirFicha(id){
       (p.estrella ? '<div class="ficha-estrellas">'+estrellasTexto(p.estrella)+'</div>' : '')+
       (mostrarPrecio ? '<div class="ficha-precio-fila">'+precioHtml+'</div>' : '')+
       stockHtml+
-      '<div class="ficha-botones">'+botonesHtml+'</div>'+
+      '<div class="ficha-botones" style="flex-direction:column;align-items:stretch">'+botonesHtml+'</div>'+
       (p.descripcion ? '<div class="ficha-seccion"><h3>Descripción</h3><p>'+escaparHTML(p.descripcion)+'</p></div>' : '')+
       (p.ingredientes ? '<div class="ficha-seccion"><h3>Ingredientes</h3><p>'+escaparHTML(p.ingredientes)+'</p></div>' : '')+
       (p.info_nutricional ? '<div class="ficha-seccion"><h3>Información nutricional</h3><p>'+escaparHTML(p.info_nutricional)+'</p></div>' : '')+
@@ -1202,6 +1233,8 @@ function abrirFicha(id){
     });
   });
 
+  const btnFichaComprarEl = document.getElementById('btnFichaComprar');
+  if(btnFichaComprarEl) btnFichaComprarEl.addEventListener('click', function(){ comprarAhora(id); });
   const btnFichaAgregarEl = document.getElementById('btnFichaAgregar');
   if(btnFichaAgregarEl) btnFichaAgregarEl.addEventListener('click', function(){ toggleConsulta(id); });
   const btnFichaWhatsappEl = document.getElementById('btnFichaWhatsapp');
