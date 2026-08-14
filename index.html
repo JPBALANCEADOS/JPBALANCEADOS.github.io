@@ -326,6 +326,8 @@ header.marca{background:var(--marca);color:#fff;}
 .pie-redes a:hover{background:var(--marca-pale);color:var(--marca);}
 .pie-whatsapp{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:700;color:var(--marca);}
 .pie-plataforma{text-align:center;padding:10px 16px 18px;font-size:.66rem;color:var(--carbon-60);opacity:.7;}
+.pie-plataforma a{color:var(--carbon-60);text-decoration:underline;text-underline-offset:2px;transition:color .12s;}
+.pie-plataforma a:hover{color:var(--marca);opacity:1;}
 </style>
 </head>
 <body>
@@ -380,6 +382,7 @@ const ICN = {
   facebook: '<svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M13.5 21v-8h2.7l.4-3.1h-3.1V8c0-.9.25-1.5 1.55-1.5H16.7V3.7C16.4 3.66 15.4 3.57 14.24 3.57c-2.42 0-4.08 1.48-4.08 4.2v2.13H7.44v3.1h2.72V21h3.34Z"/></svg>',
   tiktok: '<svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M16.6 2h-3.1v13.7a2.9 2.9 0 1 1-2.05-2.77v-3.2a6.1 6.1 0 1 0 5.15 6.03V8.9a7.1 7.1 0 0 0 4.1 1.3V7.1a4 4 0 0 1-4.1-3.9V2Z"/></svg>',
   sitio: '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18Z"/></svg>',
+  check: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 9 17 20 6"/></svg>',
 };
 function iconoImg(nombre, extra){ return '<span class="icono'+(extra?(' '+extra):'')+'">'+ICN[nombre]+'</span>'; }
 
@@ -479,7 +482,7 @@ function htmlTarjetaProducto(p){
     // varias cosas y confirmar todo junto al final.
     botonHtml = '<div class="card-fila-acciones">'+
       '<button class="card-btn-comprar" data-id="'+escaparHTML(p.producto_id)+'">Comprar</button>'+
-      '<button class="card-btn-carrito'+(enLista?' en-lista':'')+'" data-id="'+escaparHTML(p.producto_id)+'" aria-label="'+(enLista?'Quitar del carrito':'Agregar al carrito')+'" title="'+(enLista?'Quitar del carrito':'Agregar al carrito')+'">'+(enLista?'✓':'+')+'</button>'+
+      '<button class="card-btn-carrito'+(enLista?' en-lista':'')+'" data-id="'+escaparHTML(p.producto_id)+'" aria-label="'+(enLista?'Quitar del carrito':'Agregar al carrito')+'" title="'+(enLista?'Quitar del carrito':'Agregar al carrito')+'">'+(enLista?ICN.check:ICN.agregar)+'</button>'+
     '</div>';
   }
 
@@ -859,7 +862,7 @@ function renderPagina(){
         '</div>'+
         (numeroWa ? '<a class="pie-whatsapp" href="https://wa.me/'+numeroWa+'" target="_blank" rel="noopener">'+iconoImg('whatsapp')+' Escribinos por WhatsApp</a>' : '')+
       '</div>'+
-      '<div class="pie-plataforma">Catálogo creado con   © JPSistema</div>'+
+      '<div class="pie-plataforma"><a href="https://sistema.jpbalanceados.com" target="_blank" rel="noopener">¿Tenés un comercio? Este catálogo es un producto de JPSistema — ingresá acá para ver más</a></div>'+
     '</footer>'+
     '<div id="barraConsulta" class="barra-consulta">'+
       '<span class="barra-consulta-texto" id="btnVerLista" role="button" tabindex="0">'+iconoImg('lista')+'<strong id="contadorConsulta">0</strong> en tu lista — ver</span>'+
@@ -1066,7 +1069,7 @@ function toggleConsulta(id){
   });
   document.querySelectorAll('.card-btn-carrito[data-id="'+CSS.escape(id)+'"]').forEach(function(btn){
     btn.classList.toggle('en-lista', enLista);
-    btn.textContent = enLista ? '✓' : '+';
+    btn.innerHTML = enLista ? ICN.check : ICN.agregar;
     btn.setAttribute('aria-label', enLista ? 'Quitar del carrito' : 'Agregar al carrito');
     btn.setAttribute('title', enLista ? 'Quitar del carrito' : 'Agregar al carrito');
   });
@@ -1091,6 +1094,26 @@ function comprarAhora(id){
   renderBarraConsulta();
   if(document.getElementById('overlayFicha').classList.contains('abierto')) cerrarFicha();
   abrirCheckout();
+}
+
+// "Agregar al carrito" desde la ficha del producto — suma el producto
+// (o le suma 1 más si ya estaba) y CIERRA la ficha, devolviendo a la
+// persona al catálogo para que pueda seguir eligiendo otros productos.
+// La barra flotante de abajo se actualiza sola y queda como el lugar
+// para revisar cantidades y, desde ahí, confirmar el pedido o consultar
+// por WhatsApp.
+function agregarAlCarritoDesdeFicha(id){
+  const producto = CATALOGO.productos.find(function(p){ return p.producto_id===id; });
+  if(!producto || estaAgotado(producto)) return;
+  if(carrito.has(id)){
+    carrito.get(id).cantidad += 1;
+  } else {
+    carrito.set(id, { producto: producto, cantidad: 1 });
+  }
+  guardarListaEnStorage();
+  renderGrid();
+  renderBarraConsulta();
+  cerrarFicha();
 }
 
 function cambiarCantidad(id, delta){
@@ -1210,15 +1233,16 @@ function abrirFicha(id){
     '</div>';
 
   // Comprar (CTA primario, ancho completo) + fila secundaria con
-  // "Agregar a la lista" (para el que quiere pedir varias cosas) y
-  // "Consultar por WhatsApp" (para el que solo quiere preguntar).
+  // "Agregar al carrito" (suma el producto y vuelve al catálogo para
+  // seguir eligiendo — no se queda "marcado" en la ficha) y "Consultar
+  // por WhatsApp" (para el que solo quiere preguntar).
   const botonesHtml = (agotado && !puedeConsultar)
     ? '<button class="btn btn-fantasma" disabled style="width:100%">Sin stock disponible</button>'
     : (agotado
         ? '<button class="btn btn-primario" id="btnFichaAgregar" data-id="'+escaparHTML(id)+'" style="width:100%">'+(enLista?'✓ En tu lista':'+ Consultar disponibilidad')+'</button>'
-        : '<button class="btn btn-primario" id="btnFichaComprar" data-id="'+escaparHTML(id)+'" style="width:100%">Comprar ahora</button>'+
+        : '<button class="btn btn-primario" id="btnFichaComprar" data-id="'+escaparHTML(id)+'" style="width:100%">Comprar</button>'+
           '<div style="display:flex;gap:8px;width:100%;margin-top:8px">'+
-            '<button class="btn btn-fantasma" id="btnFichaAgregar" data-id="'+escaparHTML(id)+'" style="flex:1">'+(enLista?'✓ En tu lista':'+ Agregar a la lista')+'</button>'+
+            '<button class="btn btn-fantasma" id="btnFichaAgregarCarrito" data-id="'+escaparHTML(id)+'" style="flex:1">'+iconoImg('agregar')+'Agregar al carrito</button>'+
             '<button class="btn btn-fantasma" id="btnFichaWhatsapp" style="flex:1">'+iconoImg('whatsapp')+'Consultar</button>'+
           '</div>'
       );
@@ -1254,6 +1278,8 @@ function abrirFicha(id){
 
   const btnFichaComprarEl = document.getElementById('btnFichaComprar');
   if(btnFichaComprarEl) btnFichaComprarEl.addEventListener('click', function(){ comprarAhora(id); });
+  const btnFichaAgregarCarritoEl = document.getElementById('btnFichaAgregarCarrito');
+  if(btnFichaAgregarCarritoEl) btnFichaAgregarCarritoEl.addEventListener('click', function(){ agregarAlCarritoDesdeFicha(id); });
   const btnFichaAgregarEl = document.getElementById('btnFichaAgregar');
   if(btnFichaAgregarEl) btnFichaAgregarEl.addEventListener('click', function(){ toggleConsulta(id); });
   const btnFichaWhatsappEl = document.getElementById('btnFichaWhatsapp');
