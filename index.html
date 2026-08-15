@@ -179,7 +179,7 @@ header.marca{background:var(--marca);color:#fff;}
 .card-fila-acciones{display:flex;gap:6px;margin-top:8px;}
 .card-btn-comprar{flex:1;padding:8px;border-radius:var(--radio-sm);border:none;background:var(--marca);color:#fff;font-size:.75rem;font-weight:700;transition:background .12s;}
 .card-btn-comprar:hover{background:var(--marca-oscura);}
-.card-btn-carrito{flex:none;width:34px;padding:0;border-radius:var(--radio-sm);border:1.5px solid var(--marca);color:var(--marca);background:#fff;font-size:1rem;font-weight:700;display:flex;align-items:center;justify-content:center;transition:background .12s,color .12s;}
+.card-btn-carrito{flex:1;padding:7px;border-radius:var(--radio-sm);border:1.5px solid var(--marca);color:var(--marca);font-size:.7rem;font-weight:700;background:#fff;transition:background .12s,color .12s;}
 .card-btn-carrito:hover{background:var(--marca-pale);}
 .card-btn-carrito.en-lista{background:var(--marca);color:#fff;}
 .card-btn-carrito.en-lista:hover{background:var(--marca-oscura);}
@@ -382,7 +382,6 @@ const ICN = {
   facebook: '<svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M13.5 21v-8h2.7l.4-3.1h-3.1V8c0-.9.25-1.5 1.55-1.5H16.7V3.7C16.4 3.66 15.4 3.57 14.24 3.57c-2.42 0-4.08 1.48-4.08 4.2v2.13H7.44v3.1h2.72V21h3.34Z"/></svg>',
   tiktok: '<svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M16.6 2h-3.1v13.7a2.9 2.9 0 1 1-2.05-2.77v-3.2a6.1 6.1 0 1 0 5.15 6.03V8.9a7.1 7.1 0 0 0 4.1 1.3V7.1a4 4 0 0 1-4.1-3.9V2Z"/></svg>',
   sitio: '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18Z"/></svg>',
-  check: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 9 17 20 6"/></svg>',
 };
 function iconoImg(nombre, extra){ return '<span class="icono'+(extra?(' '+extra):'')+'">'+ICN[nombre]+'</span>'; }
 
@@ -477,12 +476,12 @@ function htmlTarjetaProducto(p){
       (enLista ? '✓ En tu lista' : '+ Consultar disponibilidad')+
     '</button>';
   } else {
-    // "Comprar" salta directo al checkout. El botón chico al lado suma
-    // al carrito sin salir de la página — para el que quiere pedir
-    // varias cosas y confirmar todo junto al final.
+    // "Comprar" salta directo al checkout. "+ Carrito" suma al carrito
+    // sin salir de la página — para el que quiere pedir varias cosas y
+    // confirmar todo junto al final.
     botonHtml = '<div class="card-fila-acciones">'+
       '<button class="card-btn-comprar" data-id="'+escaparHTML(p.producto_id)+'">Comprar</button>'+
-      '<button class="card-btn-carrito'+(enLista?' en-lista':'')+'" data-id="'+escaparHTML(p.producto_id)+'" aria-label="'+(enLista?'Quitar del carrito':'Agregar al carrito')+'" title="'+(enLista?'Quitar del carrito':'Agregar al carrito')+'">'+(enLista?ICN.check:ICN.agregar)+'</button>'+
+      '<button class="card-btn-carrito'+(enLista?' en-lista':'')+'" data-id="'+escaparHTML(p.producto_id)+'">'+(enLista?'✓ En carrito':'+ Carrito')+'</button>'+
     '</div>';
   }
 
@@ -862,7 +861,7 @@ function renderPagina(){
         '</div>'+
         (numeroWa ? '<a class="pie-whatsapp" href="https://wa.me/'+numeroWa+'" target="_blank" rel="noopener">'+iconoImg('whatsapp')+' Escribinos por WhatsApp</a>' : '')+
       '</div>'+
-      '<div class="pie-plataforma"><a href="https://sistema.jpbalanceados.com" target="_blank" rel="noopener">¿Tenés un comercio? Este catálogo es un producto de JPSistema — ingresá acá para ver más</a></div>'+
+      '<div class="pie-plataforma"><a href="https://sistema.jpbalanceados.com" target="_blank" rel="noopener">¿Tenés un comercio? Este catálogo funciona con JPSistema</a></div>'+
     '</footer>'+
     '<div id="barraConsulta" class="barra-consulta">'+
       '<span class="barra-consulta-texto" id="btnVerLista" role="button" tabindex="0">'+iconoImg('lista')+'<strong id="contadorConsulta">0</strong> en tu lista — ver</span>'+
@@ -1069,9 +1068,7 @@ function toggleConsulta(id){
   });
   document.querySelectorAll('.card-btn-carrito[data-id="'+CSS.escape(id)+'"]').forEach(function(btn){
     btn.classList.toggle('en-lista', enLista);
-    btn.innerHTML = enLista ? ICN.check : ICN.agregar;
-    btn.setAttribute('aria-label', enLista ? 'Quitar del carrito' : 'Agregar al carrito');
-    btn.setAttribute('title', enLista ? 'Quitar del carrito' : 'Agregar al carrito');
+    btn.textContent = enLista ? '✓ En carrito' : '+ Carrito';
   });
   const btnFicha = document.getElementById('btnFichaAgregar');
   if(btnFicha && btnFicha.dataset.id === id){
@@ -1242,7 +1239,7 @@ function abrirFicha(id){
         ? '<button class="btn btn-primario" id="btnFichaAgregar" data-id="'+escaparHTML(id)+'" style="width:100%">'+(enLista?'✓ En tu lista':'+ Consultar disponibilidad')+'</button>'
         : '<button class="btn btn-primario" id="btnFichaComprar" data-id="'+escaparHTML(id)+'" style="width:100%">Comprar</button>'+
           '<div style="display:flex;gap:8px;width:100%;margin-top:8px">'+
-            '<button class="btn btn-fantasma" id="btnFichaAgregarCarrito" data-id="'+escaparHTML(id)+'" style="flex:1">'+iconoImg('agregar')+'Agregar al carrito</button>'+
+            '<button class="btn btn-fantasma" id="btnFichaAgregarCarrito" data-id="'+escaparHTML(id)+'" style="flex:1">+ Agregar al carrito</button>'+
             '<button class="btn btn-fantasma" id="btnFichaWhatsapp" style="flex:1">'+iconoImg('whatsapp')+'Consultar</button>'+
           '</div>'
       );
