@@ -427,6 +427,15 @@ const params = new URLSearchParams(location.search);
 let API_URL = params.get('api') || '';
 const CLIENTE_SLUG = params.get('cliente') || '';
 
+// [NUEVO — CHECKOUT ECOMMERCE] Base del endpoint del ERP de ESTE comercio
+// (sin query string), la misma que ya usa fetchRecurso_ para stock.json.
+// Se completa una sola vez, dentro de iniciar(), apenas se resuelve
+// API_URL (por slug o por ?api=). enviarPedidoAlERP_() la usa para el
+// POST del checkout — si todavía no se resolvió (nunca debería pasar
+// para cuando el checkout esté disponible, porque el catálogo ya cargó),
+// cae al fallback de WhatsApp.
+let API_BASE_URL = '';
+
 let CATALOGO = null;
 let productosActuales = [];
 let carrito = new Map(); // producto_id -> { producto, cantidad }
@@ -803,6 +812,10 @@ async function iniciar(){
   // nosotros los 4 pedidos, así no importa el shape exacto de lo que
   // devolvió el directorio central o el ?api= de prueba.
   const base = API_URL.split('?')[0];
+
+  // [NUEVO — CHECKOUT ECOMMERCE] Guardamos la base del endpoint de ESTE
+  // comercio para que enviarPedidoAlERP_() la use al confirmar un pedido.
+  API_BASE_URL = base;
 
   try{
     // Los 4 recursos se piden siempre, sin condicionar a mostrar_stock:
@@ -1653,11 +1666,17 @@ function enviarConsultaWhatsapp(productosForzados){
 
 // ═══════════════════════════════════════════════════════════
 // CHECKOUT — datos del cliente, método de pago, comprobante.
-// enviarPedidoAlERP_() es el enchufe para cuando esté la integración
-// con el backend (doPost + PedidosPendientes). Hoy no existe todavía,
-// así que el pedido se arma igual y se manda por WhatsApp como
-// confirmación real — pero el payload ya queda armado en el formato
-// que va a necesitar el backend el día que se conecte.
+//
+// enviarPedidoAlERP_() ahora manda el pedido de verdad al ERP (doPost en
+// SISTEMA_doGet.gs → procesarCheckoutEcommerce_() en VENTA_Ecommerce.gs).
+// Usa Content-Type: text/plain;charset=utf-8 — confirmado con un test de
+// eco que esto evita el preflight de CORS que Apps Script no sabe
+// responder (no tiene doOptions).
+//
+// Si el ERP no puede confirmar el pedido (comercio no habilitado para
+// este canal, error de validación de stock/precio, sin conexión, etc.),
+// se sigue cayendo al fallback de WhatsApp que ya existía — ese camino
+// NO se tocó.
 //
 // abrirCheckout() nunca se llama con productos agotados en el carrito —
 // btnConfirmarPedido queda disabled mientras haya alguno (ver
@@ -1785,13 +1804,29 @@ function manejarArchivoComprobante_(event){
   lector.readAsDataURL(archivo);
 }
 
-// Enchufe para la integración con el ERP (doPost + PedidosPendientes).
-// Hoy no hay backend del otro lado, así que devuelve un fallback — pero
-// el payload ya sale armado en la forma que va a necesitar ese endpoint,
-// para no tener que retocar esta parte cuando se conecte.
+// [ACTUALIZADO — CHECKOUT ECOMMERCE] Ahora manda el pedido de verdad al
+// ERP. accion:'checkout_ecommerce' es lo que rutea el doPost del lado
+// del servidor. Si no hay API_BASE_URL todavía (no debería pasar, pero
+// por las dudas) o el fetch falla por lo que sea, se devuelve
+// {success:false, fallback:true} y confirmarPedido_() cae al mismo
+// camino de WhatsApp que ya existía.
 async function enviarPedidoAlERP_(payload){
-  console.log('Pedido armado (todavía sin conexión al ERP):', payload);
-  return { ok: false, fallback: true };
+  if(!API_BASE_URL){
+    console.log('enviarPedidoAlERP_: no hay API_BASE_URL todavía — se usa el fallback de WhatsApp.');
+    return { success:false, fallback:true };
+  }
+  try{
+    const res = await fetch(API_BASE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // evita el preflight de CORS contra Apps Script
+      body: JSON.stringify(Object.assign({ accion: 'checkout_ecommerce' }, payload)),
+    });
+    const data = await res.json();
+    return data; // {success:true, data:{...}} o {success:false, error:'...'}
+  }catch(e){
+    console.log('enviarPedidoAlERP_: el fetch falló — se usa el fallback de WhatsApp.', e);
+    return { success:false, fallback:true, error: e.message };
+  }
 }
 
 async function confirmarPedido_(){
@@ -1835,16 +1870,24 @@ async function confirmarPedido_(){
 
   const resultado = await enviarPedidoAlERP_(payload);
 
-  if(resultado.ok){
-    // Camino real, cuando exista la integración: el pedido ya quedó
-    // pendiente en el ERP. Por ahora nunca entra acá.
-    mostrarConfirmacionPedido_();
+  if(resultado.success){
+    // Camino real: el pedido ya quedó creado en el ERP y con el stock
+    // reservado por 30 minutos, a la espera de que el comercio revise el
+    // pago (si corresponde).
+    mostrarConfirmacionPedido_(true, resultado.data);
     return;
   }
 
-  // Fallback de hoy: todavía no hay backend, así que la confirmación
-  // real sigue siendo WhatsApp — pero con todo el detalle del pedido
-  // armado (cliente, cantidades, método de pago elegido).
+  // Fallback: el ERP no pudo confirmar el pedido (comercio no habilitado
+  // para este canal, error de validación, sin conexión, etc.) — se sigue
+  // confirmando por WhatsApp como hasta ahora, con todo el detalle del
+  // pedido armado (cliente, cantidades, método de pago elegido). Si el
+  // rechazo vino con un motivo puntual del servidor, se lo mostramos.
+  if(resultado.error && !resultado.fallback){
+    mensajeEl.className = 'msg error';
+    mensajeEl.textContent = resultado.error + ' — vamos a confirmar por WhatsApp.';
+  }
+
   let texto = 'Hola! Quiero confirmar el siguiente pedido:\n\n';
   texto += textoResumenPedido_();
   texto += '\n\nNombre: '+nombre+'\nTeléfono: '+telefono;
@@ -1860,15 +1903,28 @@ async function confirmarPedido_(){
   const url = (numero ? 'https://wa.me/'+numero : 'https://wa.me/') + '?text=' + encodeURIComponent(texto);
   window.open(url, '_blank');
 
-  mostrarConfirmacionPedido_();
+  mostrarConfirmacionPedido_(false);
 }
 
-function mostrarConfirmacionPedido_(){
+// [ACTUALIZADO — CHECKOUT ECOMMERCE] Ahora distingue dos caminos:
+//   pedidoConfirmadoEnERP=true  → el pedido quedó registrado de verdad en
+//     el ERP, con stock reservado por 30 minutos. No hace falta WhatsApp.
+//   pedidoConfirmadoEnERP=false → fallback: se abrió WhatsApp (comporta-
+//     miento anterior, sin cambios).
+function mostrarConfirmacionPedido_(pedidoConfirmadoEnERP, datosPedido){
+  const icono = pedidoConfirmadoEnERP ? 'caja' : 'whatsapp';
+
+  const mensajeExtra = pedidoConfirmadoEnERP
+    ? '<p>Tu pedido quedó registrado'+(datosPedido && datosPedido.numero_np ? ' (Nota de Pedido '+escaparHTML(datosPedido.numero_np)+')' : '')+'. Te guardamos el stock por 30 minutos'+
+      (metodoPagoElegido === 'transferencia' ? ' — mandanos el comprobante lo antes posible para que no se libere.' : '.')+
+      '</p>'
+    : '<p>Tu pedido se armó y se abrió WhatsApp para que lo confirmes con el comercio. Si adjuntaste un comprobante, recordá enviarlo también ahí.</p>';
+
   document.getElementById('checkoutContenido').innerHTML =
     '<div class="checkout-confirmacion">'+
-      '<div class="checkout-confirmacion-icono">'+iconoImg('whatsapp')+'</div>'+
+      '<div class="checkout-confirmacion-icono">'+iconoImg(icono)+'</div>'+
       '<h2 style="font-size:1.05rem">¡Listo!</h2>'+
-      '<p>Tu pedido se armó y se abrió WhatsApp para que lo confirmes con el comercio. Si adjuntaste un comprobante, recordá enviarlo también ahí.</p>'+
+      mensajeExtra+
       '<button class="btn btn-primario" style="width:100%" onclick="finalizarCheckout_()">Cerrar</button>'+
     '</div>';
 }
