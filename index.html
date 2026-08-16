@@ -143,15 +143,20 @@ header.marca{background:var(--marca);color:#fff;}
    siguen leyendo bien estén sobre la foto o no; lo que si necesita
    ajuste es el texto suelto (beneficios, etiquetas "Animal"/"Etapa")
    que pasa a blanco con sombra para no perderse contra la imagen.
-   Esta regla va DESPUÉS de las reglas base de .barra-filtros y
-   .chips-etiqueta a propósito: a igual especificidad, en CSS gana la
-   que aparece más abajo — si quedara antes (como en un intento
-   anterior), las reglas base la pisarían y no se vería el efecto.
-   En mobile/tablet todo queda igual que siempre: franjas blancas. ── */
+   Se usa position:absolute (anclado al piso del wrapper) en vez de
+   margin-top negativo: probado que el margen negativo, combinado con
+   position:relative + z-index en Chromium, generaba un bug real de
+   compositing que dejaba los chips semitransparentes/con colores
+   mezclados — no era solo un problema de la vista previa, se
+   reprodujo igual en captura real de navegador. position:absolute no
+   tiene ese problema. En mobile/tablet todo queda igual que siempre:
+   franjas blancas, sin wrapper especial. ── */
 @media (min-width:860px){
+  .hero-desktop-wrap{position:relative;}
   .portada{min-height:460px;}
   .portada::after{height:40px;}
-  .beneficios{background:transparent;border-bottom:none;position:relative;z-index:2;margin-top:-260px;}
+  .hero-overlay-inferior{position:absolute;left:0;right:0;bottom:0;z-index:2;}
+  .beneficios{background:transparent;border-bottom:none;}
   .beneficio-item{color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);}
   .beneficio-item .icono{color:#fff;}
   .beneficio-item:not(:first-child){border-left-color:rgba(255,255,255,.35);}
@@ -901,6 +906,7 @@ function renderPagina(){
     '<div class="chip chip-destacado" id="chipDestacadosPublico">★ Destacados <span class="chip-count">('+contarDestacados()+')</span></div>';
 
   document.getElementById('raiz').innerHTML =
+    '<div class="hero-desktop-wrap">'+
     '<header class="marca">'+
       '<div class="portada" style="'+(negocio.portada ? 'background-image:linear-gradient(180deg, rgba(15,20,18,.25), rgba(15,20,18,.55)), url(\''+escaparHTML(negocio.portada).replace(/'/g,"%27")+'\')' : '')+'">'+
         '<div class="marca-info">'+
@@ -915,6 +921,7 @@ function renderPagina(){
         '</div>'+
       '</div>'+
     '</header>'+
+    '<div class="hero-overlay-inferior">'+
     '<div class="beneficios"><div class="beneficios-inner">'+
       '<div class="beneficio-item">'+iconoImg('actualizado')+'<span>Catálogo siempre actualizado</span></div>'+
       '<div class="beneficio-item">'+iconoImg('etiqueta')+'<span>Ofertas y destacados al día</span></div>'+
@@ -937,6 +944,8 @@ function renderPagina(){
       '<div class="fila-chips-etiquetada"><span class="chips-etiqueta">Animal</span><div id="chipsEspecie" class="chips-fila">'+chipsEspecie+'</div></div>'+
       '<div class="fila-chips-etiquetada"><span class="chips-etiqueta">Etapa</span><div id="chipsEtapa" class="chips-fila">'+chipsEtapa+'</div></div>'+
     '</div></div>'+
+    '</div>'+
+    '</div>'+
     '<main class="contenido">'+
       '<div id="resultadoInfo" class="resultado-info"></div>'+
       '<div id="grid" class="grid-productos"></div>'+
