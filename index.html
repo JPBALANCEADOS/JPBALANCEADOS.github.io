@@ -367,6 +367,28 @@ header.marca{background:var(--marca);color:#fff;}
 .barra-btn-solido:hover{opacity:.88;}
 
 /* ── Footer ── */
+/* ── Barra sticky que aparece al scrollear pasado el banner (solo
+   desktop). El show/hide se controla en JS agregando/sacando la clase
+   .visible según el ancho de pantalla y la posición del scroll — así
+   evitamos depender de qué regla CSS "gana" según el orden en el
+   archivo (ya nos mordió antes con .chip y .barra-filtros). En mobile
+   JS nunca agrega .visible, así que esto quedaría con opacity:0 y
+   pointer-events:none siempre, sin interferir con el sticky nativo
+   que ya tiene .barra-filtros ahí. ── */
+.barra-sticky-scroll{position:fixed;top:0;left:0;right:0;z-index:50;background:rgba(255,255,255,.85);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid rgba(0,0,0,.06);box-shadow:0 4px 16px rgba(0,0,0,.08);transform:translateY(-100%);opacity:0;transition:transform .25s ease, opacity .25s ease;pointer-events:none;}
+.barra-sticky-scroll.visible{transform:translateY(0);opacity:1;pointer-events:auto;}
+.barra-sticky-inner{max-width:1400px;margin:0 auto;padding:10px 24px;display:flex;align-items:center;gap:16px;}
+.barra-sticky-marca{display:flex;align-items:center;gap:10px;flex:none;}
+.barra-sticky-logo{width:34px;height:34px;border-radius:50%;overflow:hidden;flex:none;background:var(--hueso);}
+.barra-sticky-logo img{width:100%;height:100%;object-fit:cover;}
+.barra-sticky-logo .sin-logo{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--marca);}
+.barra-sticky-nombre{font-family:'Big Shoulders',sans-serif;font-weight:700;font-size:1rem;text-transform:uppercase;letter-spacing:.3px;color:var(--carbon);white-space:nowrap;}
+.barra-sticky-buscador{flex:1;max-width:520px;}
+.barra-sticky-carrito{position:relative;flex:none;width:42px;height:42px;border-radius:50%;background:var(--marca);color:#fff;display:flex;align-items:center;justify-content:center;transition:background .12s;}
+.barra-sticky-carrito:hover{background:var(--marca-oscura);}
+.barra-sticky-badge{position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;padding:0 4px;border-radius:999px;background:var(--rojo);color:#fff;font-size:.62rem;font-weight:800;display:flex;align-items:center;justify-content:center;line-height:1;}
+.barra-sticky-badge.oculto{display:none;}
+
 .pie{margin-top:28px;border-top:1px solid var(--borde);background:#fff;}
 .pie-inner{max-width:1400px;margin:0 auto;padding:24px 16px;display:flex;flex-direction:column;gap:14px;align-items:center;text-align:center;}
 @media (min-width:640px){ .pie-inner{flex-direction:row;justify-content:space-between;text-align:left;} }
@@ -920,6 +942,19 @@ function renderPagina(){
     '<div class="chip chip-destacado" id="chipDestacadosPublico">★ Destacados <span class="chip-count">('+contarDestacados()+')</span></div>';
 
   document.getElementById('raiz').innerHTML =
+    '<div id="barraStickyScroll" class="barra-sticky-scroll">'+
+      '<div class="barra-sticky-inner">'+
+        '<div class="barra-sticky-marca">'+
+          '<div class="barra-sticky-logo">'+(negocio.logo ? '<img src="'+escaparHTML(negocio.logo)+'" alt="">' : '<span class="sin-logo">'+ICN.pata+'</span>')+'</div>'+
+          '<span class="barra-sticky-nombre">'+escaparHTML(negocio.nombre || 'Catálogo')+'</span>'+
+        '</div>'+
+        '<div class="buscador-wrap barra-sticky-buscador"><span class="buscador-icono">'+ICN.buscar+'</span>'+
+          '<input id="buscadorSticky" type="text" placeholder="Buscar producto, marca o categoría..." aria-label="Buscar producto o marca">'+
+          '<button class="buscador-limpiar" id="btnLimpiarBuscadorSticky" aria-label="Limpiar búsqueda">✕</button>'+
+        '</div>'+
+        '<button class="barra-sticky-carrito" id="btnCarritoSticky" aria-label="Ver carrito" title="Ver carrito">'+iconoImg('agregar')+'<span id="contadorConsultaSticky" class="barra-sticky-badge">0</span></button>'+
+      '</div>'+
+    '</div>'+
     '<div class="hero-desktop-wrap">'+
     '<header class="marca">'+
       '<div class="portada" style="'+(negocio.portada ? 'background-image:linear-gradient(180deg, rgba(15,20,18,.25), rgba(15,20,18,.55)), url(\''+escaparHTML(negocio.portada).replace(/'/g,"%27")+'\')' : '')+'">'+
@@ -1024,17 +1059,36 @@ function renderPagina(){
       '</div>'+
     '</div>';
 
+  // El buscador principal (en el banner) y el de la barra sticky (que
+  // aparece al scrollear) son dos <input> distintos, pero representan
+  // la misma búsqueda — esta función mantiene ambos sincronizados sin
+  // importar desde cuál se escribió.
+  function sincronizarBusqueda_(valor, origen){
+    filtroTexto = valor.trim().toLowerCase();
+    const principal = document.getElementById('buscador');
+    const sticky = document.getElementById('buscadorSticky');
+    if(principal && origen !== principal) principal.value = valor;
+    if(sticky && origen !== sticky) sticky.value = valor;
+    const limpiarPrincipal = document.getElementById('btnLimpiarBuscador');
+    const limpiarSticky = document.getElementById('btnLimpiarBuscadorSticky');
+    if(limpiarPrincipal) limpiarPrincipal.classList.toggle('visible', !!valor);
+    if(limpiarSticky) limpiarSticky.classList.toggle('visible', !!valor);
+    aplicarFiltros();
+  }
+
   const buscadorInput = document.getElementById('buscador');
-  buscadorInput.addEventListener('input', function(){
-    filtroTexto = this.value.trim().toLowerCase();
-    document.getElementById('btnLimpiarBuscador').classList.toggle('visible', !!this.value);
-    aplicarFiltros();
-  });
+  buscadorInput.addEventListener('input', function(){ sincronizarBusqueda_(this.value, this); });
   document.getElementById('btnLimpiarBuscador').addEventListener('click', function(){
-    buscadorInput.value = ''; filtroTexto = ''; this.classList.remove('visible');
+    sincronizarBusqueda_('', null);
     buscadorInput.focus();
-    aplicarFiltros();
   });
+  const buscadorStickyInput = document.getElementById('buscadorSticky');
+  buscadorStickyInput.addEventListener('input', function(){ sincronizarBusqueda_(this.value, this); });
+  document.getElementById('btnLimpiarBuscadorSticky').addEventListener('click', function(){
+    sincronizarBusqueda_('', null);
+    buscadorStickyInput.focus();
+  });
+  document.getElementById('btnCarritoSticky').addEventListener('click', abrirLista);
   document.getElementById('ordenSelect').addEventListener('change', function(){
     ordenActual = this.value;
     aplicarFiltros();
@@ -1093,6 +1147,35 @@ function renderPagina(){
 
   renderBarraConsulta();
   aplicarFiltros();
+  inicializarBarraSticky_();
+}
+
+// La barra sticky solo tiene sentido en desktop: en mobile/tablet la
+// barra de filtros original YA es sticky (position:sticky nativo) y
+// muestra buscador+chips+todo mientras se scrollea, así que ahí esta
+// función simplemente no debe mostrar nada. Se re-evalúa el ancho en
+// cada scroll/resize por si la persona rota el celu o cambia el
+// tamaño de la ventana.
+function inicializarBarraSticky_(){
+  const barra = document.getElementById('barraStickyScroll');
+  const heroWrap = document.querySelector('.hero-desktop-wrap');
+  if(!barra || !heroWrap) return;
+  let scrollTicking = false;
+  function actualizarVisibilidad_(){
+    scrollTicking = false;
+    const esDesktop = window.matchMedia('(min-width:860px)').matches;
+    if(!esDesktop){ barra.classList.remove('visible'); return; }
+    // Se muestra apenas el banner (con beneficios+filtros superpuestos)
+    // termina de salir de la vista, para que el buscador y el carrito
+    // nunca queden inaccesibles mientras se scrollea el catálogo.
+    const rect = heroWrap.getBoundingClientRect();
+    barra.classList.toggle('visible', rect.bottom <= 40);
+  }
+  window.addEventListener('scroll', function(){
+    if(!scrollTicking){ window.requestAnimationFrame(actualizarVisibilidad_); scrollTicking = true; }
+  }, { passive: true });
+  window.addEventListener('resize', actualizarVisibilidad_);
+  actualizarVisibilidad_();
 }
 
 function aplicarFiltros(){
@@ -1272,6 +1355,11 @@ function renderBarraConsulta(){
   const totalEl = document.getElementById('barraConsultaTotal');
   if(totalEl) totalEl.textContent = (mostrarPrecio && items>0) ? ('Total estimado $'+monto(totalCarrito())) : '';
   barra.classList.toggle('visible', items>0);
+  const badgeSticky = document.getElementById('contadorConsultaSticky');
+  if(badgeSticky){
+    badgeSticky.textContent = items;
+    badgeSticky.classList.toggle('oculto', items===0);
+  }
 }
 
 // "También te puede interesar" — prioriza misma especie, etapa, marca y
