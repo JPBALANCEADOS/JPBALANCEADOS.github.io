@@ -117,22 +117,6 @@ header.marca{background:var(--marca);color:#fff;}
 @media (min-width:640px){ .beneficio-item:not(:first-child){border-left:1px solid var(--borde);padding-left:16px;} }
 .beneficio-item .icono{color:var(--marca);}
 
-/* ── Desktop grande: el banner crece y la franja de beneficios se
-   superpone transparente sobre la foto (los filtros, al ir quedando en
-   la parte ya desvanecida a hueso, se mantienen legibles sin necesitar
-   fondo propio — sus controles como el buscador y los chips ya son
-   opacos de por sí, así que no pierden contraste). En mobile/tablet
-   todo queda exactamente como estaba: franjas blancas separadas. ── */
-@media (min-width:860px){
-  .portada{min-height:400px;}
-  .portada::after{height:210px;}
-  .beneficios{background:transparent;border-bottom:none;position:relative;z-index:2;margin-top:-210px;}
-  .beneficio-item{color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);}
-  .beneficio-item .icono{color:#fff;}
-  .beneficio-item:not(:first-child){border-left-color:rgba(255,255,255,.35);}
-  .barra-filtros{position:static;background:transparent;box-shadow:none;border-bottom:none;}
-}
-
 /* ── Buscador + filtros ── */
 .barra-filtros{position:sticky;top:0;z-index:20;background:var(--blanco);border-bottom:1px solid var(--borde);box-shadow:var(--sombra-sm);}
 .barra-filtros-inner{max-width:1400px;margin:0 auto;padding:12px 16px;display:flex;flex-direction:column;gap:10px;}
@@ -149,6 +133,30 @@ header.marca{background:var(--marca);color:#fff;}
 @media (min-width:640px){
   .fila-chips-etiquetada{flex-direction:row;align-items:center;gap:10px;}
   .chips-etiqueta{flex:none;width:52px;}
+}
+
+/* ── Desktop grande: el banner crece y TANTO la franja de beneficios
+   COMO la de filtros (buscador + chips Animal/Etapa) se superponen
+   transparentes sobre la foto — recién se desvanece a hueso justo
+   antes de que empiece la grilla de productos. Los controles del
+   buscador/select/chips ya tienen su propio fondo opaco, así que se
+   siguen leyendo bien estén sobre la foto o no; lo que si necesita
+   ajuste es el texto suelto (beneficios, etiquetas "Animal"/"Etapa")
+   que pasa a blanco con sombra para no perderse contra la imagen.
+   Esta regla va DESPUÉS de las reglas base de .barra-filtros y
+   .chips-etiqueta a propósito: a igual especificidad, en CSS gana la
+   que aparece más abajo — si quedara antes (como en un intento
+   anterior), las reglas base la pisarían y no se vería el efecto.
+   En mobile/tablet todo queda igual que siempre: franjas blancas. ── */
+@media (min-width:860px){
+  .portada{min-height:460px;}
+  .portada::after{height:40px;}
+  .beneficios{background:transparent;border-bottom:none;position:relative;z-index:2;margin-top:-260px;}
+  .beneficio-item{color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);}
+  .beneficio-item .icono{color:#fff;}
+  .beneficio-item:not(:first-child){border-left-color:rgba(255,255,255,.35);}
+  .barra-filtros{position:static;background:transparent;box-shadow:none;border-bottom:none;}
+  .chips-etiqueta{color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);}
 }
 .chips-fila{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;}
 .chips-fila::-webkit-scrollbar{display:none;}
