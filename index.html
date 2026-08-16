@@ -186,9 +186,9 @@ header.marca{background:var(--marca);color:#fff;}
 .card-btn-agregar.en-lista:hover{background:var(--marca-oscura);}
 .card-btn-agregar:disabled{opacity:.5;cursor:default;background:#fff;color:var(--carbon-60);border-color:var(--borde);}
 .card-fila-acciones{display:flex;gap:6px;margin-top:8px;}
-.card-btn-comprar{flex:1;padding:8px;border-radius:var(--radio-sm);border:none;background:var(--marca);color:#fff;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px;transition:background .12s;}
+.card-btn-comprar{flex:1;padding:8px;border-radius:var(--radio-sm);border:none;background:var(--marca);color:#fff;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px;display:flex;align-items:center;justify-content:center;gap:5px;transition:background .12s;}
 .card-btn-comprar:hover{background:var(--marca-oscura);}
-.card-btn-carrito{flex:1;padding:7px;border-radius:var(--radio-sm);border:1.5px solid var(--marca);color:var(--marca);font-size:.7rem;font-weight:700;background:#fff;transition:background .12s,color .12s;}
+.card-btn-carrito{flex:1;padding:7px;border-radius:var(--radio-sm);border:1.5px solid var(--marca);color:var(--marca);font-size:.7rem;font-weight:700;background:#fff;display:flex;align-items:center;justify-content:center;gap:5px;transition:background .12s,color .12s;}
 .card-btn-carrito:hover{background:var(--marca-pale);}
 .card-btn-carrito.en-lista{background:var(--marca);color:#fff;}
 .card-btn-carrito.en-lista:hover{background:var(--marca-oscura);}
@@ -494,8 +494,8 @@ function htmlTarjetaProducto(p){
     // sin salir de la página — para el que quiere pedir varias cosas y
     // confirmar todo junto al final.
     botonHtml = '<div class="card-fila-acciones">'+
-      '<button class="card-btn-comprar" data-id="'+escaparHTML(p.producto_id)+'">Comprar</button>'+
-      '<button class="card-btn-carrito'+(enLista?' en-lista':'')+'" data-id="'+escaparHTML(p.producto_id)+'">'+(enLista?'✓ En carrito':'+ Carrito')+'</button>'+
+      '<button class="card-btn-comprar" data-id="'+escaparHTML(p.producto_id)+'">'+iconoImg('agregar')+'Comprar</button>'+
+      '<button class="card-btn-carrito'+(enLista?' en-lista':'')+'" data-id="'+escaparHTML(p.producto_id)+'">'+iconoImg('agregar')+(enLista?'✓ En carrito':'+ Carrito')+'</button>'+
     '</div>';
   }
 
@@ -803,6 +803,32 @@ const [datosCatalogo, datosPrecios, datosNegocio, datosStock] = await Promise.al
   }
 }
 
+// El negocio solo configura UN color (negocio.color). Las variantes
+// --marca-oscura / --marca-clara / --marca-pale que usa el resto del CSS
+// (degradé del header, hover de botones, fondos suaves) se calculan acá
+// a partir de ese color — así todo el catálogo queda realmente atado a
+// la configuración, en vez de quedar fijo en el verde original.
+function mezclarColor_(hex, hacia, cantidad){
+  hex = String(hex||'').replace('#','');
+  if(hex.length === 3) hex = hex.split('').map(function(c){ return c+c; }).join('');
+  const num = parseInt(hex, 16);
+  if(isNaN(num)) return null;
+  let r = (num>>16)&255, g = (num>>8)&255, b = num&255;
+  const objetivo = hacia === 'blanco' ? 255 : 0;
+  r = Math.round(r + (objetivo-r)*cantidad);
+  g = Math.round(g + (objetivo-g)*cantidad);
+  b = Math.round(b + (objetivo-b)*cantidad);
+  const clamp = function(v){ return Math.max(0, Math.min(255, v)); };
+  return '#'+[clamp(r),clamp(g),clamp(b)].map(function(v){ return v.toString(16).padStart(2,'0'); }).join('');
+}
+function aplicarColorMarca_(colorBase){
+  const raiz = document.documentElement.style;
+  raiz.setProperty('--marca', colorBase);
+  raiz.setProperty('--marca-oscura', mezclarColor_(colorBase, 'negro', 0.28) || colorBase);
+  raiz.setProperty('--marca-clara', mezclarColor_(colorBase, 'blanco', 0.13) || colorBase);
+  raiz.setProperty('--marca-pale', mezclarColor_(colorBase, 'blanco', 0.88) || colorBase);
+}
+
 function especiesUnicas(){
   const set = new Map();
   CATALOGO.productos.forEach(function(p){
@@ -832,7 +858,7 @@ function renderPagina(){
   detenerTypewriterCarga_();
   const negocio = CATALOGO.negocio || {};
   const colorMarca = negocio.color || '#2D6A4F';
-  document.documentElement.style.setProperty('--marca', colorMarca);
+  aplicarColorMarca_(colorMarca);
   const tituloPagina = negocio.nombre ? (negocio.nombre + ' — Catálogo') : 'Catálogo';
   document.title = tituloPagina;
   actualizarFavicon(negocio.logo);
@@ -1124,7 +1150,7 @@ function toggleConsulta(id){
   });
   document.querySelectorAll('.card-btn-carrito[data-id="'+CSS.escape(id)+'"]').forEach(function(btn){
     btn.classList.toggle('en-lista', enLista);
-    btn.textContent = enLista ? '✓ En carrito' : '+ Carrito';
+    btn.innerHTML = iconoImg('agregar') + (enLista ? '✓ En carrito' : '+ Carrito');
   });
   const btnFicha = document.getElementById('btnFichaAgregar');
   if(btnFicha && btnFicha.dataset.id === id){
@@ -1297,9 +1323,9 @@ function abrirFicha(id){
     ? '<button class="btn btn-fantasma" disabled style="width:100%">Sin stock disponible</button>'
     : (agotado
         ? '<button class="btn btn-primario" id="btnFichaAgregar" data-id="'+escaparHTML(id)+'" style="width:100%">'+(enLista?'✓ En tu lista':'+ Consultar disponibilidad')+'</button>'
-        : '<button class="btn btn-primario" id="btnFichaComprar" data-id="'+escaparHTML(id)+'" style="width:100%;text-transform:uppercase;letter-spacing:.3px">Comprar</button>'+
+        : '<button class="btn btn-primario" id="btnFichaComprar" data-id="'+escaparHTML(id)+'" style="width:100%;text-transform:uppercase;letter-spacing:.3px">'+iconoImg('agregar')+'Comprar</button>'+
           '<div style="display:flex;gap:8px;width:100%;margin-top:8px">'+
-            '<button class="btn btn-fantasma" id="btnFichaAgregarCarrito" data-id="'+escaparHTML(id)+'" style="flex:1">+ Agregar al carrito</button>'+
+            '<button class="btn btn-fantasma" id="btnFichaAgregarCarrito" data-id="'+escaparHTML(id)+'" style="flex:1">'+iconoImg('agregar')+'Agregar al carrito</button>'+
             '<button class="btn btn-fantasma" id="btnFichaWhatsapp" style="flex:1">'+iconoImg('whatsapp')+'Consultar</button>'+
           '</div>'
       );
