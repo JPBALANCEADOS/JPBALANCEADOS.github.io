@@ -98,6 +98,7 @@ a{color:inherit;}
 /* ── Header / portada ── */
 header.marca{background:var(--marca);color:#fff;}
 .portada{position:relative;min-height:150px;background:linear-gradient(160deg,var(--marca-oscura),var(--marca));background-size:cover;background-position:center;}
+.portada::after{content:'';position:absolute;left:0;right:0;bottom:0;height:0;background:linear-gradient(to bottom, rgba(0,0,0,0), var(--hueso));pointer-events:none;}
 .marca-info{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:22px 20px;max-width:1400px;margin:0 auto;}
 .marca-info-izq{display:flex;align-items:center;gap:14px;min-width:0;}
 .marca-logo{width:60px;height:60px;border-radius:50%;overflow:hidden;flex:none;background:#fff;box-shadow:var(--sombra-md);}
@@ -107,10 +108,6 @@ header.marca{background:var(--marca);color:#fff;}
 .marca-acciones{display:flex;gap:8px;flex:none;}
 .btn-header-icono{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;display:flex;align-items:center;justify-content:center;transition:background .15s;}
 .btn-header-icono:hover{background:rgba(255,255,255,.28);}
-.btn-header-whatsapp{width:auto;padding:0 16px;gap:7px;background:#fff;color:var(--marca-oscura);font-size:.8rem;font-weight:700;}
-.btn-header-whatsapp:hover{background:#fff;opacity:.9;}
-.btn-header-whatsapp span.texto-wa{display:none;}
-@media (min-width:480px){ .btn-header-whatsapp{width:auto;} .btn-header-whatsapp span.texto-wa{display:inline;} }
 
 /* ── Franja de beneficios ── */
 .beneficios{background:#fff;border-bottom:1px solid var(--borde);}
@@ -119,6 +116,22 @@ header.marca{background:var(--marca);color:#fff;}
 .beneficio-item{display:flex;align-items:center;gap:8px;font-size:.72rem;font-weight:600;color:var(--carbon-60);}
 @media (min-width:640px){ .beneficio-item:not(:first-child){border-left:1px solid var(--borde);padding-left:16px;} }
 .beneficio-item .icono{color:var(--marca);}
+
+/* ── Desktop grande: el banner crece y la franja de beneficios se
+   superpone transparente sobre la foto (los filtros, al ir quedando en
+   la parte ya desvanecida a hueso, se mantienen legibles sin necesitar
+   fondo propio — sus controles como el buscador y los chips ya son
+   opacos de por sí, así que no pierden contraste). En mobile/tablet
+   todo queda exactamente como estaba: franjas blancas separadas. ── */
+@media (min-width:860px){
+  .portada{min-height:400px;}
+  .portada::after{height:210px;}
+  .beneficios{background:transparent;border-bottom:none;position:relative;z-index:2;margin-top:-210px;}
+  .beneficio-item{color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);}
+  .beneficio-item .icono{color:#fff;}
+  .beneficio-item:not(:first-child){border-left-color:rgba(255,255,255,.35);}
+  .barra-filtros{position:static;background:transparent;box-shadow:none;border-bottom:none;}
+}
 
 /* ── Buscador + filtros ── */
 .barra-filtros{position:sticky;top:0;z-index:20;background:var(--blanco);border-bottom:1px solid var(--borde);box-shadow:var(--sombra-sm);}
@@ -888,7 +901,7 @@ function renderPagina(){
             '<h1 class="marca-nombre">'+escaparHTML(negocio.nombre || 'Catálogo')+'</h1>'+
           '</div>'+
           '<div class="marca-acciones">'+
-            (numeroWa ? '<button class="btn-header-icono btn-header-whatsapp" id="btnWhatsappHeader" title="Escribinos por WhatsApp">'+iconoImg('whatsapp')+'<span class="texto-wa">WhatsApp</span></button>' : '')+
+            (numeroWa ? '<button class="btn-header-icono" id="btnWhatsappHeader" title="Escribinos por WhatsApp" aria-label="Escribinos por WhatsApp">'+iconoImg('whatsapp')+'</button>' : '')+
             '<button class="btn-header-icono" id="btnCompartirCatalogo" title="Compartir catálogo" aria-label="Compartir catálogo">'+iconoImg('compartir')+'</button>'+
           '</div>'+
         '</div>'+
