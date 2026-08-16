@@ -171,6 +171,20 @@ header.marca{background:var(--marca);color:#fff;}
 .chip.chip-destacado{margin-left:auto;}
 .chip.chip-destacado.activo{border-color:var(--amarillo);background:var(--amarillo);color:#2A1F04;}
 .chip .chip-count{opacity:.7;font-weight:500;}
+
+/* Chips estilo "vidrio esmerilado" en la zona transparente de desktop
+   — mismo lenguaje que los botones circulares de WhatsApp/Compartir
+   del header (blanco translúcido + blur), en vez de píldoras blancas
+   opacas que cortan la foto. Va DESPUÉS de las reglas base de .chip
+   por la misma razón de cascada explicada arriba: a igual
+   especificidad gana la regla que aparece más abajo en el archivo. */
+@media (min-width:860px){
+  .chip{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.4);color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.35);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+  .chip .chip-count{opacity:.85;}
+  .chip:not(.activo):hover{background:rgba(255,255,255,.3);border-color:#fff;color:#fff;}
+  .chip.activo{background:var(--marca);border-color:var(--marca);color:#fff;text-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;}
+  .chip.chip-destacado.activo{background:var(--amarillo);border-color:var(--amarillo);color:#2A1F04;}
+}
 .card-etiquetas{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;}
 .etiqueta{padding:2px 7px;border-radius:999px;background:var(--hueso);color:var(--carbon-60);font-size:.62rem;font-weight:600;white-space:nowrap;}
 
