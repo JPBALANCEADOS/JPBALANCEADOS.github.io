@@ -118,7 +118,7 @@ header.marca{background:var(--marca);color:#fff;}
 .beneficio-item .icono{color:var(--marca);}
 
 /* ── Buscador + filtros ── */
-.barra-filtros{position:sticky;top:0;z-index:20;background:var(--blanco);border-bottom:1px solid var(--borde);box-shadow:var(--sombra-sm);}
+.barra-filtros{background:var(--blanco);border-bottom:1px solid var(--borde);box-shadow:var(--sombra-sm);}
 .barra-filtros-inner{max-width:1400px;margin:0 auto;padding:12px 16px;display:flex;flex-direction:column;gap:10px;}
 .fila-buscador-orden{display:flex;gap:8px;}
 .buscador-wrap{position:relative;flex:1;min-width:0;}
@@ -160,7 +160,7 @@ header.marca{background:var(--marca);color:#fff;}
   .beneficio-item{color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);}
   .beneficio-item .icono{color:#fff;}
   .beneficio-item:not(:first-child){border-left-color:rgba(255,255,255,.35);}
-  .barra-filtros{position:static;background:transparent;box-shadow:none;border-bottom:none;}
+  .barra-filtros{background:transparent;box-shadow:none;border-bottom:none;}
   .chips-etiqueta{color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);}
 }
 .chips-fila{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;}
@@ -366,27 +366,29 @@ header.marca{background:var(--marca);color:#fff;}
 .barra-btn-solido{background:#fff;color:var(--marca-oscura);border-radius:999px;height:40px;padding:0 16px;font-weight:700;font-size:.8rem;display:flex;align-items:center;gap:6px;transition:opacity .12s;}
 .barra-btn-solido:hover{opacity:.88;}
 
-/* ── Footer ── */
-/* ── Barra sticky que aparece al scrollear pasado el banner (solo
-   desktop). El show/hide se controla en JS agregando/sacando la clase
-   .visible según el ancho de pantalla y la posición del scroll — así
-   evitamos depender de qué regla CSS "gana" según el orden en el
-   archivo (ya nos mordió antes con .chip y .barra-filtros). En mobile
-   JS nunca agrega .visible, así que esto quedaría con opacity:0 y
-   pointer-events:none siempre, sin interferir con el sticky nativo
-   que ya tiene .barra-filtros ahí. ── */
-.barra-sticky-scroll{position:fixed;top:0;left:0;right:0;z-index:50;background:rgba(255,255,255,.85);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid rgba(0,0,0,.06);box-shadow:0 4px 16px rgba(0,0,0,.08);transform:translateY(-100%);opacity:0;transition:transform .25s ease, opacity .25s ease;pointer-events:none;}
+/* ── Barra superior fija (header en miniatura): SIEMPRE existe en el
+   DOM, position:fixed arriba de todo, oculta con transform+opacity
+   mientras estás en el tope de la página. Aparece deslizándose apenas
+   arrancás a scrollear (ver JS, umbral bajo — no espera a que el
+   banner entero desaparezca). El buscador que trae adentro arranca
+   oculto (.oculto) y solo se muestra cuando el buscador grande del
+   banner sale de la vista — así nunca se ven los dos buscadores
+   activos a la vez. En mobile funciona igual que en desktop: es la
+   franja de la Imagen 2, siempre la misma, en vez del sticky nativo
+   que tenía antes solo la barra de filtros. ── */
+.barra-sticky-scroll{position:fixed;top:0;left:0;right:0;z-index:70;background:rgba(20,26,23,.42);backdrop-filter:blur(14px) saturate(1.1);-webkit-backdrop-filter:blur(14px) saturate(1.1);border-bottom:1px solid rgba(255,255,255,.14);box-shadow:0 4px 20px rgba(0,0,0,.14);transform:translateY(-100%);opacity:0;transition:transform .25s ease, opacity .25s ease;pointer-events:none;}
 .barra-sticky-scroll.visible{transform:translateY(0);opacity:1;pointer-events:auto;}
-.barra-sticky-inner{max-width:1400px;margin:0 auto;padding:10px 24px;display:flex;align-items:center;gap:16px;}
-.barra-sticky-marca{display:flex;align-items:center;gap:10px;flex:none;}
-.barra-sticky-logo{width:34px;height:34px;border-radius:50%;overflow:hidden;flex:none;background:var(--hueso);}
+.barra-sticky-inner{max-width:1400px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px;}
+.barra-sticky-marca{display:flex;align-items:center;gap:10px;flex:none;min-width:0;}
+.barra-sticky-logo{width:38px;height:38px;border-radius:50%;overflow:hidden;flex:none;background:#fff;box-shadow:var(--sombra-sm);}
 .barra-sticky-logo img{width:100%;height:100%;object-fit:cover;}
 .barra-sticky-logo .sin-logo{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--marca);}
-.barra-sticky-nombre{font-family:'Big Shoulders',sans-serif;font-weight:700;font-size:1rem;text-transform:uppercase;letter-spacing:.3px;color:var(--carbon);white-space:nowrap;}
-.barra-sticky-buscador{flex:1;max-width:520px;}
-.barra-sticky-carrito{position:relative;flex:none;width:42px;height:42px;border-radius:50%;background:var(--marca);color:#fff;display:flex;align-items:center;justify-content:center;transition:background .12s;}
-.barra-sticky-carrito:hover{background:var(--marca-oscura);}
-.barra-sticky-badge{position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;padding:0 4px;border-radius:999px;background:var(--rojo);color:#fff;font-size:.62rem;font-weight:800;display:flex;align-items:center;justify-content:center;line-height:1;}
+.barra-sticky-nombre{font-family:'Big Shoulders',sans-serif;font-weight:700;font-size:.98rem;text-transform:uppercase;letter-spacing:.3px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:38vw;}
+.barra-sticky-buscador{flex:1;min-width:0;max-width:520px;overflow:hidden;max-height:0;opacity:0;transition:max-height .2s ease, opacity .18s ease, margin .2s ease;}
+.barra-sticky-buscador.visible{max-height:60px;opacity:1;}
+.barra-sticky-buscador .buscador-wrap input{background:#fff;}
+.barra-sticky-acciones{display:flex;gap:8px;flex:none;margin-left:auto;}
+.barra-sticky-badge{position:absolute;top:-2px;right:-2px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--rojo);color:#fff;font-size:.6rem;font-weight:800;display:flex;align-items:center;justify-content:center;line-height:1;box-shadow:0 0 0 2px rgba(0,0,0,.25);}
 .barra-sticky-badge.oculto{display:none;}
 
 .pie{margin-top:28px;border-top:1px solid var(--borde);background:#fff;}
@@ -425,6 +427,15 @@ const params = new URLSearchParams(location.search);
 let API_URL = params.get('api') || '';
 const CLIENTE_SLUG = params.get('cliente') || '';
 
+// [NUEVO — CHECKOUT ECOMMERCE] Base del endpoint del ERP de ESTE comercio
+// (sin query string), la misma que ya usa fetchRecurso_ para stock.json.
+// Se completa una sola vez, dentro de iniciar(), apenas se resuelve
+// API_URL (por slug o por ?api=). enviarPedidoAlERP_() la usa para el
+// POST del checkout — si todavía no se resolvió (nunca debería pasar
+// para cuando el checkout esté disponible, porque el catálogo ya cargó),
+// cae al fallback de WhatsApp.
+let API_BASE_URL = '';
+
 let CATALOGO = null;
 let productosActuales = [];
 let carrito = new Map(); // producto_id -> { producto, cantidad }
@@ -458,6 +469,7 @@ const ICN = {
   facebook: '<svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M13.5 21v-8h2.7l.4-3.1h-3.1V8c0-.9.25-1.5 1.55-1.5H16.7V3.7C16.4 3.66 15.4 3.57 14.24 3.57c-2.42 0-4.08 1.48-4.08 4.2v2.13H7.44v3.1h2.72V21h3.34Z"/></svg>',
   tiktok: '<svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M16.6 2h-3.1v13.7a2.9 2.9 0 1 1-2.05-2.77v-3.2a6.1 6.1 0 1 0 5.15 6.03V8.9a7.1 7.1 0 0 0 4.1 1.3V7.1a4 4 0 0 1-4.1-3.9V2Z"/></svg>',
   sitio: '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18Z"/></svg>',
+  carrito: '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.4" fill="currentColor" stroke="none"/><circle cx="17.5" cy="20" r="1.4" fill="currentColor" stroke="none"/><path d="M2.5 3h2l2.6 12.4A2 2 0 0 0 9.05 17H18a2 2 0 0 0 1.94-1.5L21.5 8H6.2"/></svg>',
 };
 function iconoImg(nombre, extra){ return '<span class="icono'+(extra?(' '+extra):'')+'">'+ICN[nombre]+'</span>'; }
 
@@ -801,6 +813,10 @@ async function iniciar(){
   // devolvió el directorio central o el ?api= de prueba.
   const base = API_URL.split('?')[0];
 
+  // [NUEVO — CHECKOUT ECOMMERCE] Guardamos la base del endpoint de ESTE
+  // comercio para que enviarPedidoAlERP_() la use al confirmar un pedido.
+  API_BASE_URL = base;
+
   try{
     // Los 4 recursos se piden siempre, sin condicionar a mostrar_stock:
     // aunque el negocio no quiera EXHIBIR el número de stock, igual lo
@@ -948,11 +964,17 @@ function renderPagina(){
           '<div class="barra-sticky-logo">'+(negocio.logo ? '<img src="'+escaparHTML(negocio.logo)+'" alt="">' : '<span class="sin-logo">'+ICN.pata+'</span>')+'</div>'+
           '<span class="barra-sticky-nombre">'+escaparHTML(negocio.nombre || 'Catálogo')+'</span>'+
         '</div>'+
-        '<div class="buscador-wrap barra-sticky-buscador"><span class="buscador-icono">'+ICN.buscar+'</span>'+
-          '<input id="buscadorSticky" type="text" placeholder="Buscar producto, marca o categoría..." aria-label="Buscar producto o marca">'+
-          '<button class="buscador-limpiar" id="btnLimpiarBuscadorSticky" aria-label="Limpiar búsqueda">✕</button>'+
+        '<div id="stickyBuscadorWrap" class="barra-sticky-buscador">'+
+          '<div class="buscador-wrap"><span class="buscador-icono">'+ICN.buscar+'</span>'+
+            '<input id="buscadorSticky" type="text" placeholder="Buscar producto, marca o categoría..." aria-label="Buscar producto o marca">'+
+            '<button class="buscador-limpiar" id="btnLimpiarBuscadorSticky" aria-label="Limpiar búsqueda">✕</button>'+
+          '</div>'+
         '</div>'+
-        '<button class="barra-sticky-carrito" id="btnCarritoSticky" aria-label="Ver carrito" title="Ver carrito">'+iconoImg('agregar')+'<span id="contadorConsultaSticky" class="barra-sticky-badge">0</span></button>'+
+        '<div class="barra-sticky-acciones">'+
+          (numeroWa ? '<button class="btn-header-icono" id="btnWhatsappSticky" title="Escribinos por WhatsApp" aria-label="Escribinos por WhatsApp">'+iconoImg('whatsapp')+'</button>' : '')+
+          '<button class="btn-header-icono" id="btnCompartirSticky" title="Compartir catálogo" aria-label="Compartir catálogo">'+iconoImg('compartir')+'</button>'+
+          '<button class="btn-header-icono" id="btnCarritoSticky" aria-label="Ver carrito" title="Ver carrito" style="position:relative">'+iconoImg('carrito')+'<span id="contadorConsultaSticky" class="barra-sticky-badge">0</span></button>'+
+        '</div>'+
       '</div>'+
     '</div>'+
     '<div class="hero-desktop-wrap">'+
@@ -966,6 +988,7 @@ function renderPagina(){
           '<div class="marca-acciones">'+
             (numeroWa ? '<button class="btn-header-icono" id="btnWhatsappHeader" title="Escribinos por WhatsApp" aria-label="Escribinos por WhatsApp">'+iconoImg('whatsapp')+'</button>' : '')+
             '<button class="btn-header-icono" id="btnCompartirCatalogo" title="Compartir catálogo" aria-label="Compartir catálogo">'+iconoImg('compartir')+'</button>'+
+            '<button class="btn-header-icono" id="btnCarritoHeader" aria-label="Ver carrito" title="Ver carrito" style="position:relative">'+iconoImg('carrito')+'<span id="contadorConsultaHeader" class="barra-sticky-badge">0</span></button>'+
           '</div>'+
         '</div>'+
       '</div>'+
@@ -1089,6 +1112,7 @@ function renderPagina(){
     buscadorStickyInput.focus();
   });
   document.getElementById('btnCarritoSticky').addEventListener('click', abrirLista);
+  document.getElementById('btnCarritoHeader').addEventListener('click', abrirLista);
   document.getElementById('ordenSelect').addEventListener('change', function(){
     ordenActual = this.value;
     aplicarFiltros();
@@ -1124,19 +1148,25 @@ function renderPagina(){
   document.getElementById('overlayCheckout').addEventListener('click', function(e){ if(e.target===this) cerrarCheckout(); });
 
   if(numeroWa){
-    document.getElementById('btnWhatsappHeader').addEventListener('click', function(){
+    const irAWhatsapp = function(){
       const texto = (negocio.mensaje_whatsapp && negocio.mensaje_whatsapp.trim())
         ? negocio.mensaje_whatsapp
         : 'Hola! Estoy viendo el catálogo de ' + (negocio.nombre||'') + ' y tengo una consulta.';
       window.open('https://wa.me/'+numeroWa+'?text='+encodeURIComponent(texto), '_blank');
-    });
+    };
+    document.getElementById('btnWhatsappHeader').addEventListener('click', irAWhatsapp);
+    const btnWaSticky = document.getElementById('btnWhatsappSticky');
+    if(btnWaSticky) btnWaSticky.addEventListener('click', irAWhatsapp);
   }
 
-  document.getElementById('btnCompartirCatalogo').addEventListener('click', function(){
+  const compartirCatalogo_ = function(){
     const datosCompartir = { title: tituloPagina, text: 'Mirá el catálogo de ' + (negocio.nombre||'este comercio'), url: location.href };
     if(navigator.share){ navigator.share(datosCompartir).catch(function(){}); }
     else if(navigator.clipboard){ navigator.clipboard.writeText(location.href).then(function(){ alert('Enlace copiado.'); }); }
-  });
+  };
+  document.getElementById('btnCompartirCatalogo').addEventListener('click', compartirCatalogo_);
+  const btnCompartirSticky = document.getElementById('btnCompartirSticky');
+  if(btnCompartirSticky) btnCompartirSticky.addEventListener('click', compartirCatalogo_);
 
   document.addEventListener('keydown', function(e){
     if(e.key !== 'Escape') return;
@@ -1150,26 +1180,32 @@ function renderPagina(){
   inicializarBarraSticky_();
 }
 
-// La barra sticky solo tiene sentido en desktop: en mobile/tablet la
-// barra de filtros original YA es sticky (position:sticky nativo) y
-// muestra buscador+chips+todo mientras se scrollea, así que ahí esta
-// función simplemente no debe mostrar nada. Se re-evalúa el ancho en
-// cada scroll/resize por si la persona rota el celu o cambia el
-// tamaño de la ventana.
+// Barra superior fija: aparece apenas se scrollea un poco (no hace
+// falta esperar a que el banner grande desaparezca del todo) y funciona
+// igual en mobile y desktop. El buscador que trae adentro se muestra
+// recién cuando el buscador grande del banner sale de la vista (se
+// mide su posición contra el alto de la barra fija), para que nunca
+// convivan dos buscadores activos en pantalla.
 function inicializarBarraSticky_(){
   const barra = document.getElementById('barraStickyScroll');
-  const heroWrap = document.querySelector('.hero-desktop-wrap');
-  if(!barra || !heroWrap) return;
+  const buscadorPrincipal = document.getElementById('buscador');
+  const buscadorStickyWrap = document.getElementById('stickyBuscadorWrap');
+  if(!barra) return;
+  const UMBRAL_APARICION = 24; // px scrolleados para que la franja se muestre
   let scrollTicking = false;
   function actualizarVisibilidad_(){
     scrollTicking = false;
-    const esDesktop = window.matchMedia('(min-width:860px)').matches;
-    if(!esDesktop){ barra.classList.remove('visible'); return; }
-    // Se muestra apenas el banner (con beneficios+filtros superpuestos)
-    // termina de salir de la vista, para que el buscador y el carrito
-    // nunca queden inaccesibles mientras se scrollea el catálogo.
-    const rect = heroWrap.getBoundingClientRect();
-    barra.classList.toggle('visible', rect.bottom <= 40);
+    const y = window.scrollY || document.documentElement.scrollTop || 0;
+    barra.classList.toggle('visible', y > UMBRAL_APARICION);
+
+    if(buscadorPrincipal && buscadorStickyWrap){
+      const alturaBarra = barra.offsetHeight || 0;
+      const rect = buscadorPrincipal.getBoundingClientRect();
+      // El buscador grande "desaparece" cuando su borde inferior queda
+      // tapado por la franja fija (o directamente arriba de la pantalla).
+      const tapado = rect.bottom <= alturaBarra;
+      buscadorStickyWrap.classList.toggle('visible', tapado);
+    }
   }
   window.addEventListener('scroll', function(){
     if(!scrollTicking){ window.requestAnimationFrame(actualizarVisibilidad_); scrollTicking = true; }
@@ -1359,6 +1395,11 @@ function renderBarraConsulta(){
   if(badgeSticky){
     badgeSticky.textContent = items;
     badgeSticky.classList.toggle('oculto', items===0);
+  }
+  const badgeHeader = document.getElementById('contadorConsultaHeader');
+  if(badgeHeader){
+    badgeHeader.textContent = items;
+    badgeHeader.classList.toggle('oculto', items===0);
   }
 }
 
@@ -1625,11 +1666,17 @@ function enviarConsultaWhatsapp(productosForzados){
 
 // ═══════════════════════════════════════════════════════════
 // CHECKOUT — datos del cliente, método de pago, comprobante.
-// enviarPedidoAlERP_() es el enchufe para cuando esté la integración
-// con el backend (doPost + PedidosPendientes). Hoy no existe todavía,
-// así que el pedido se arma igual y se manda por WhatsApp como
-// confirmación real — pero el payload ya queda armado en el formato
-// que va a necesitar el backend el día que se conecte.
+//
+// enviarPedidoAlERP_() ahora manda el pedido de verdad al ERP (doPost en
+// SISTEMA_doGet.gs → procesarCheckoutEcommerce_() en VENTA_Ecommerce.gs).
+// Usa Content-Type: text/plain;charset=utf-8 — confirmado con un test de
+// eco que esto evita el preflight de CORS que Apps Script no sabe
+// responder (no tiene doOptions).
+//
+// Si el ERP no puede confirmar el pedido (comercio no habilitado para
+// este canal, error de validación de stock/precio, sin conexión, etc.),
+// se sigue cayendo al fallback de WhatsApp que ya existía — ese camino
+// NO se tocó.
 //
 // abrirCheckout() nunca se llama con productos agotados en el carrito —
 // btnConfirmarPedido queda disabled mientras haya alguno (ver
@@ -1660,6 +1707,17 @@ function abrirCheckout(){
 
     '<label class="checkout-label">Teléfono *</label>'+
     '<input id="ckTelefono" type="tel" class="checkout-input" placeholder="Tu WhatsApp o teléfono">'+
+
+    // [NUEVO — dirección de entrega] Sin "partido": es fricción real para
+    // un comprador que no lo sabe de memoria. Se resuelve después con una
+    // tabla de equivalencia CP→partido, del lado del ERP.
+    '<label class="checkout-label">Dirección de entrega (calle y número) *</label>'+
+    '<input id="ckDireccionCalle" type="text" class="checkout-input" placeholder="Ej: Av. Rivadavia 1234">'+
+
+    '<div style="display:flex;gap:8px;margin-top:12px">'+
+      '<div style="flex:1"><label class="checkout-label">Código postal *</label><input id="ckCP" type="text" class="checkout-input" placeholder="Ej: 1832"></div>'+
+      '<div style="flex:2"><label class="checkout-label">Localidad *</label><input id="ckLocalidad" type="text" class="checkout-input" placeholder="Ej: Lomas de Zamora"></div>'+
+    '</div>'+
 
     '<label class="checkout-label">Notas para el pedido (opcional)</label>'+
     '<textarea id="ckNotas" class="checkout-textarea" placeholder="Horario de entrega, aclaraciones, etc."></textarea>'+
@@ -1757,13 +1815,29 @@ function manejarArchivoComprobante_(event){
   lector.readAsDataURL(archivo);
 }
 
-// Enchufe para la integración con el ERP (doPost + PedidosPendientes).
-// Hoy no hay backend del otro lado, así que devuelve un fallback — pero
-// el payload ya sale armado en la forma que va a necesitar ese endpoint,
-// para no tener que retocar esta parte cuando se conecte.
+// [ACTUALIZADO — CHECKOUT ECOMMERCE] Ahora manda el pedido de verdad al
+// ERP. accion:'checkout_ecommerce' es lo que rutea el doPost del lado
+// del servidor. Si no hay API_BASE_URL todavía (no debería pasar, pero
+// por las dudas) o el fetch falla por lo que sea, se devuelve
+// {success:false, fallback:true} y confirmarPedido_() cae al mismo
+// camino de WhatsApp que ya existía.
 async function enviarPedidoAlERP_(payload){
-  console.log('Pedido armado (todavía sin conexión al ERP):', payload);
-  return { ok: false, fallback: true };
+  if(!API_BASE_URL){
+    console.log('enviarPedidoAlERP_: no hay API_BASE_URL todavía — se usa el fallback de WhatsApp.');
+    return { success:false, fallback:true };
+  }
+  try{
+    const res = await fetch(API_BASE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // evita el preflight de CORS contra Apps Script
+      body: JSON.stringify(Object.assign({ accion: 'checkout_ecommerce' }, payload)),
+    });
+    const data = await res.json();
+    return data; // {success:true, data:{...}} o {success:false, error:'...'}
+  }catch(e){
+    console.log('enviarPedidoAlERP_: el fetch falló — se usa el fallback de WhatsApp.', e);
+    return { success:false, fallback:true, error: e.message };
+  }
 }
 
 async function confirmarPedido_(){
@@ -1775,6 +1849,9 @@ async function confirmarPedido_(){
 
   const nombre = document.getElementById('ckNombre').value.trim();
   const telefono = document.getElementById('ckTelefono').value.trim();
+  const direccionCalle = document.getElementById('ckDireccionCalle').value.trim();
+  const codigoPostal = document.getElementById('ckCP').value.trim();
+  const localidad = document.getElementById('ckLocalidad').value.trim();
   const notas = document.getElementById('ckNotas').value.trim();
   const mensajeEl = document.getElementById('checkoutMensaje');
 
@@ -1783,11 +1860,17 @@ async function confirmarPedido_(){
     mensajeEl.textContent = 'Completá tu nombre y teléfono para confirmar.';
     return;
   }
+  if(!direccionCalle || !codigoPostal || !localidad){
+    mensajeEl.className = 'msg error';
+    mensajeEl.textContent = 'Completá la dirección de entrega, código postal y localidad para confirmar.';
+    return;
+  }
 
   const negocio = (CATALOGO && CATALOGO.negocio) || {};
   const payload = {
     fecha: new Date().toISOString(),
     cliente: { nombre: nombre, telefono: telefono, notas: notas },
+    direccion: { calle_numero: direccionCalle, codigo_postal: codigoPostal, localidad: localidad },
     items: Array.from(carrito.values()).map(function(entrada){
       return {
         producto_id: entrada.producto.producto_id,
@@ -1807,19 +1890,30 @@ async function confirmarPedido_(){
 
   const resultado = await enviarPedidoAlERP_(payload);
 
-  if(resultado.ok){
-    // Camino real, cuando exista la integración: el pedido ya quedó
-    // pendiente en el ERP. Por ahora nunca entra acá.
-    mostrarConfirmacionPedido_();
+  if(resultado.success){
+    // Camino real: el pedido ya quedó creado en el ERP y con el stock
+    // reservado por 30 minutos, a la espera de que el comercio revise el
+    // pago (si corresponde).
+    mostrarConfirmacionPedido_(true, resultado.data);
     return;
   }
 
-  // Fallback de hoy: todavía no hay backend, así que la confirmación
-  // real sigue siendo WhatsApp — pero con todo el detalle del pedido
-  // armado (cliente, cantidades, método de pago elegido).
+  // Fallback: el ERP no pudo confirmar el pedido (comercio no habilitado
+  // para este canal, error de validación, sin conexión, etc.) — se sigue
+  // confirmando por WhatsApp como hasta ahora, con todo el detalle del
+  // pedido armado (cliente, cantidades, dirección, método de pago
+  // elegido). Si el rechazo vino con un motivo puntual del servidor, se
+  // lo mostramos.
+  if(resultado.error && !resultado.fallback){
+    mensajeEl.className = 'msg error';
+    mensajeEl.textContent = resultado.error + ' — vamos a confirmar por WhatsApp.';
+    await new Promise(function(r){ setTimeout(r, 2200); });
+  }
+
   let texto = 'Hola! Quiero confirmar el siguiente pedido:\n\n';
   texto += textoResumenPedido_();
   texto += '\n\nNombre: '+nombre+'\nTeléfono: '+telefono;
+  texto += '\nDirección: '+direccionCalle+', '+localidad+' (CP '+codigoPostal+')';
   if(notas) texto += '\nNotas: '+notas;
   if(negocio.acepta_pagos){
     texto += '\nMétodo de pago: '+(metodoPagoElegido === 'transferencia' ? 'Transferencia' : 'Efectivo / a coordinar');
@@ -1832,15 +1926,28 @@ async function confirmarPedido_(){
   const url = (numero ? 'https://wa.me/'+numero : 'https://wa.me/') + '?text=' + encodeURIComponent(texto);
   window.open(url, '_blank');
 
-  mostrarConfirmacionPedido_();
+  mostrarConfirmacionPedido_(false);
 }
 
-function mostrarConfirmacionPedido_(){
+// [ACTUALIZADO — CHECKOUT ECOMMERCE] Ahora distingue dos caminos:
+//   pedidoConfirmadoEnERP=true  → el pedido quedó registrado de verdad en
+//     el ERP, con stock reservado por 30 minutos. No hace falta WhatsApp.
+//   pedidoConfirmadoEnERP=false → fallback: se abrió WhatsApp (comporta-
+//     miento anterior, sin cambios).
+function mostrarConfirmacionPedido_(pedidoConfirmadoEnERP, datosPedido){
+  const icono = pedidoConfirmadoEnERP ? 'caja' : 'whatsapp';
+
+  const mensajeExtra = pedidoConfirmadoEnERP
+    ? '<p>Tu pedido quedó registrado'+(datosPedido && datosPedido.numero_np ? ' (Nota de Pedido '+escaparHTML(datosPedido.numero_np)+')' : '')+'. Te guardamos el stock por 30 minutos'+
+      (metodoPagoElegido === 'transferencia' ? ' — mandanos el comprobante lo antes posible para que no se libere.' : '.')+
+      '</p>'
+    : '<p>Tu pedido se armó y se abrió WhatsApp para que lo confirmes con el comercio. Si adjuntaste un comprobante, recordá enviarlo también ahí.</p>';
+
   document.getElementById('checkoutContenido').innerHTML =
     '<div class="checkout-confirmacion">'+
-      '<div class="checkout-confirmacion-icono">'+iconoImg('whatsapp')+'</div>'+
+      '<div class="checkout-confirmacion-icono">'+iconoImg(icono)+'</div>'+
       '<h2 style="font-size:1.05rem">¡Listo!</h2>'+
-      '<p>Tu pedido se armó y se abrió WhatsApp para que lo confirmes con el comercio. Si adjuntaste un comprobante, recordá enviarlo también ahí.</p>'+
+      mensajeExtra+
       '<button class="btn btn-primario" style="width:100%" onclick="finalizarCheckout_()">Cerrar</button>'+
     '</div>';
 }
