@@ -135,34 +135,32 @@ header.marca{background:var(--marca);color:#fff;}
   .chips-etiqueta{flex:none;width:52px;}
 }
 
-/* ── Desktop grande: el banner crece y TANTO la franja de beneficios
-   COMO la de filtros (buscador + chips Animal/Etapa) se superponen
-   transparentes sobre la foto — recién se desvanece a hueso justo
-   antes de que empiece la grilla de productos. Los controles del
-   buscador/select/chips ya tienen su propio fondo opaco, así que se
-   siguen leyendo bien estén sobre la foto o no; lo que si necesita
-   ajuste es el texto suelto (beneficios, etiquetas "Animal"/"Etapa")
-   que pasa a blanco con sombra para no perderse contra la imagen.
+/* ── El banner crece y TANTO la franja de beneficios COMO la de
+   filtros (buscador + chips Animal/Etapa) se superponen transparentes
+   sobre la foto, en cualquier tamaño de pantalla (antes esto era solo
+   desktop) — recién se desvanece a hueso justo antes de que empiece
+   la grilla de productos. Los controles del buscador/select/chips ya
+   tienen su propio fondo opaco, así que se siguen leyendo bien estén
+   sobre la foto o no; lo que si necesita ajuste es el texto suelto
+   (beneficios, etiquetas "Animal"/"Etapa") que pasa a blanco con
+   sombra para no perderse contra la imagen.
    Se usa position:absolute (anclado al piso del wrapper) en vez de
    margin-top negativo: probado que el margen negativo, combinado con
    position:relative + z-index en Chromium, generaba un bug real de
    compositing que dejaba los chips semitransparentes/con colores
    mezclados — no era solo un problema de la vista previa, se
    reprodujo igual en captura real de navegador. position:absolute no
-   tiene ese problema. En mobile/tablet todo queda igual que siempre:
-   franjas blancas, sin wrapper especial. ── */
-@media (min-width:860px){
-  .hero-desktop-wrap{position:relative;}
-  .portada{min-height:460px;}
-  .portada::after{height:40px;}
-  .hero-overlay-inferior{position:absolute;left:0;right:0;bottom:0;z-index:2;}
-  .beneficios{background:transparent;border-bottom:none;}
-  .beneficio-item{color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);}
-  .beneficio-item .icono{color:#fff;}
-  .beneficio-item:not(:first-child){border-left-color:rgba(255,255,255,.35);}
-  .barra-filtros{background:transparent;box-shadow:none;border-bottom:none;}
-  .chips-etiqueta{color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);}
-}
+   tiene ese problema. ── */
+.hero-desktop-wrap{position:relative;}
+.portada{min-height:460px;}
+.portada::after{height:40px;}
+.hero-overlay-inferior{position:absolute;left:0;right:0;bottom:0;z-index:2;}
+.beneficios{background:transparent;border-bottom:none;}
+.beneficio-item{color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);}
+.beneficio-item .icono{color:#fff;}
+.beneficio-item:not(:first-child){border-left-color:rgba(255,255,255,.35);}
+.barra-filtros{background:transparent;box-shadow:none;border-bottom:none;}
+.chips-etiqueta{color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);}
 .chips-fila{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;}
 .chips-fila::-webkit-scrollbar{display:none;}
 .chip{flex:none;padding:7px 14px;border:1.5px solid var(--borde);border-radius:999px;background:#fff;color:var(--carbon-60);font-size:.8rem;font-weight:600;white-space:nowrap;transition:background .12s,color .12s,border-color .12s;}
@@ -172,19 +170,17 @@ header.marca{background:var(--marca);color:#fff;}
 .chip.chip-destacado.activo{border-color:var(--amarillo);background:var(--amarillo);color:#2A1F04;}
 .chip .chip-count{opacity:.7;font-weight:500;}
 
-/* Chips estilo "vidrio esmerilado" en la zona transparente de desktop
+/* Chips estilo "vidrio esmerilado" en la zona transparente del banner
    — mismo lenguaje que los botones circulares de WhatsApp/Compartir
    del header (blanco translúcido + blur), en vez de píldoras blancas
    opacas que cortan la foto. Va DESPUÉS de las reglas base de .chip
    por la misma razón de cascada explicada arriba: a igual
    especificidad gana la regla que aparece más abajo en el archivo. */
-@media (min-width:860px){
-  .chip{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.4);color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.35);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
-  .chip .chip-count{opacity:.85;}
-  .chip:not(.activo):hover{background:rgba(255,255,255,.3);border-color:#fff;color:#fff;}
-  .chip.activo{background:var(--marca);border-color:var(--marca);color:#fff;text-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;}
-  .chip.chip-destacado.activo{background:var(--amarillo);border-color:var(--amarillo);color:#2A1F04;}
-}
+.chip{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.4);color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.35);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+.chip .chip-count{opacity:.85;}
+.chip:not(.activo):hover{background:rgba(255,255,255,.3);border-color:#fff;color:#fff;}
+.chip.activo{background:var(--marca);border-color:var(--marca);color:#fff;text-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;}
+.chip.chip-destacado.activo{background:var(--amarillo);border-color:var(--amarillo);color:#2A1F04;}
 .card-etiquetas{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;}
 .etiqueta{padding:2px 7px;border-radius:999px;background:var(--hueso);color:var(--carbon-60);font-size:.62rem;font-weight:600;white-space:nowrap;}
 
@@ -226,9 +222,14 @@ header.marca{background:var(--marca);color:#fff;}
 .card-btn-agregar.en-lista:hover{background:var(--marca-oscura);}
 .card-btn-agregar:disabled{opacity:.5;cursor:default;background:#fff;color:var(--carbon-60);border-color:var(--borde);}
 .card-fila-acciones{display:flex;gap:6px;margin-top:8px;}
-.card-btn-comprar{flex:1;padding:8px;border-radius:var(--radio-sm);border:none;background:var(--marca);color:#fff;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px;display:flex;align-items:center;justify-content:center;gap:5px;transition:background .12s;}
+.card-btn-comprar{flex:1;min-width:0;padding:8px;border-radius:var(--radio-sm);border:none;background:var(--marca);color:#fff;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px;display:flex;align-items:center;justify-content:center;gap:5px;transition:background .12s;}
 .card-btn-comprar:hover{background:var(--marca-oscura);}
-.card-btn-carrito{flex:1;padding:7px;border-radius:var(--radio-sm);border:1.5px solid var(--marca);color:var(--marca);font-size:.7rem;font-weight:700;background:#fff;display:flex;align-items:center;justify-content:center;gap:5px;transition:background .12s,color .12s;}
+/* Solo ícono (sin texto "Carrito") — ancho fijo, angosto, para que no
+   compita en ancho con "Comprar" ni se desborde de la tarjeta; el alto
+   lo toma solo del flex del contenedor (align-items:stretch por
+   defecto), así queda igual de alto que el botón Comprar. */
+.card-btn-carrito{flex:none;width:38px;padding:0;border-radius:var(--radio-sm);border:1.5px solid var(--marca);color:var(--marca);background:#fff;display:flex;align-items:center;justify-content:center;transition:background .12s,color .12s;}
+.card-btn-carrito .icono svg{width:16px;height:16px;}
 .card-btn-carrito:hover{background:var(--marca-pale);}
 .card-btn-carrito.en-lista{background:var(--marca);color:#fff;}
 .card-btn-carrito.en-lista:hover{background:var(--marca-oscura);}
@@ -390,6 +391,19 @@ header.marca{background:var(--marca);color:#fff;}
 .barra-sticky-acciones{display:flex;gap:8px;flex:none;margin-left:auto;}
 .barra-sticky-badge{position:absolute;top:-2px;right:-2px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--rojo);color:#fff;font-size:.6rem;font-weight:800;display:flex;align-items:center;justify-content:center;line-height:1;box-shadow:0 0 0 2px rgba(0,0,0,.25);}
 .barra-sticky-badge.oculto{display:none;}
+
+/* Mobile: la barra sticky no tiene lugar para nombre + buscador a la
+   vez (el nombre se comía el ancho y el buscador quedaba condicionado
+   a que el buscador grande del banner saliera de la vista, cosa que
+   en pantallas chicas tarda o no siempre pasa antes de que la persona
+   ya quiera buscar). Se saca el nombre y el buscador queda siempre
+   visible apenas aparece la barra sticky (al lado del logo), sin
+   depender del toggle por scroll que sigue usándose en desktop. */
+@media (max-width:859px){
+  .barra-sticky-marca{flex:none;}
+  .barra-sticky-nombre{display:none;}
+  .barra-sticky-buscador{max-height:60px;opacity:1;}
+}
 
 .pie{margin-top:28px;border-top:1px solid var(--borde);background:#fff;}
 .pie-inner{max-width:1400px;margin:0 auto;padding:24px 16px;display:flex;flex-direction:column;gap:14px;align-items:center;text-align:center;}
@@ -569,7 +583,7 @@ function htmlTarjetaProducto(p){
     // confirmar todo junto al final.
     botonHtml = '<div class="card-fila-acciones">'+
       '<button class="card-btn-comprar" data-id="'+escaparHTML(p.producto_id)+'">'+iconoImg('agregar')+'Comprar</button>'+
-      '<button class="card-btn-carrito'+(enLista?' en-lista':'')+'" data-id="'+escaparHTML(p.producto_id)+'">'+iconoImg('agregar')+(enLista?'✓ En carrito':'+ Carrito')+'</button>'+
+      '<button class="card-btn-carrito'+(enLista?' en-lista':'')+'" data-id="'+escaparHTML(p.producto_id)+'" aria-label="'+(enLista?'Quitar del carrito':'Agregar al carrito')+'" title="'+(enLista?'Quitar del carrito':'Agregar al carrito')+'">'+iconoImg('carrito')+'</button>'+
     '</div>';
   }
 
@@ -1313,7 +1327,10 @@ function toggleConsulta(id){
   });
   document.querySelectorAll('.card-btn-carrito[data-id="'+CSS.escape(id)+'"]').forEach(function(btn){
     btn.classList.toggle('en-lista', enLista);
-    btn.innerHTML = iconoImg('agregar') + (enLista ? '✓ En carrito' : '+ Carrito');
+    btn.innerHTML = iconoImg('carrito');
+    const etiquetaAccion = enLista ? 'Quitar del carrito' : 'Agregar al carrito';
+    btn.setAttribute('aria-label', etiquetaAccion);
+    btn.setAttribute('title', etiquetaAccion);
   });
   const btnFicha = document.getElementById('btnFichaAgregar');
   if(btnFicha && btnFicha.dataset.id === id){
