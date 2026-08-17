@@ -1883,6 +1883,19 @@ async function confirmarPedido_(){
     return;
   }
 
+  // [ACTUALIZADO — anti-bloqueo de popups] Se abre la pestaña de
+  // WhatsApp ACÁ, en blanco, ANTES de cualquier await. Si esperáramos a
+  // tener la URL final (después del fetch al ERP), el "gesto de click"
+  // del usuario ya expiró y varios navegadores —sobre todo en
+  // celular— bloquean la ventana en silencio: el pedido queda
+  // confirmado en el sistema pero el cliente nunca ve el WhatsApp y lo
+  // pierde. Abriéndola ahora (todavía sin URL) el navegador la asocia
+  // al click y no la bloquea; más abajo, una vez armado el mensaje, se
+  // le carga la URL real con .location.href. Si el navegador la
+  // bloqueó de todos modos, ventanaWhatsapp queda en null y mostramos
+  // un botón para abrirla a mano (ver más abajo).
+  const ventanaWhatsapp = window.open('', '_blank');
+
   const negocio = (CATALOGO && CATALOGO.negocio) || {};
   const payload = {
     fecha: new Date().toISOString(),
@@ -1907,11 +1920,11 @@ async function confirmarPedido_(){
 
   const resultado = await enviarPedidoAlERP_(payload);
 
-  // [ACTUALIZADO] El texto del pedido para WhatsApp se arma SIEMPRE, haya
-  // quedado o no registrado en el ERP. El comprador no tiene forma de
-  // consultar su pedido después (no hay portal/login) — el mensaje de
-  // WhatsApp es su único comprobante, y es indispensable que lo tenga
-  // sobre todo si ya pagó por transferencia.
+  // El texto del pedido para WhatsApp se arma SIEMPRE, haya quedado o no
+  // registrado en el ERP. El comprador no tiene forma de consultar su
+  // pedido después (no hay portal/login) — el mensaje de WhatsApp es su
+  // único comprobante, y es indispensable que lo tenga, sobre todo si
+  // ya pagó por transferencia.
   const numeroNP = (resultado.success && resultado.data && resultado.data.numero_np) ? resultado.data.numero_np : '';
   let texto = resultado.success
     ? 'Hola! Quiero avisar que acabo de confirmar mi pedido'+(numeroNP ? ' (Nota de Pedido '+numeroNP+')' : '')+':\n\n'
@@ -1929,13 +1942,22 @@ async function confirmarPedido_(){
   const numero = String(negocio.whatsapp || '').replace(/[^\d]/g,'');
   const url = (numero ? 'https://wa.me/'+numero : 'https://wa.me/') + '?text=' + encodeURIComponent(texto);
 
+  // Navega la pestaña que ya estaba abierta (esto NO requiere gesto del
+  // usuario, a diferencia de abrir una nueva). Si esa pestaña no existe
+  // más (bloqueada al abrirla, o el usuario la cerró mientras esperaba),
+  // seAbrio queda en false y el botón "Abrir WhatsApp" de la pantalla de
+  // confirmación es el respaldo para que el pedido no se pierda igual.
+  let seAbrio = false;
+  if(ventanaWhatsapp && !ventanaWhatsapp.closed){
+    try{ ventanaWhatsapp.location.href = url; seAbrio = true; }catch(e){ seAbrio = false; }
+  }
+
   if(resultado.success){
     // El pedido ya quedó creado en el ERP y con el stock reservado por
     // 30 minutos, a la espera de que el comercio revise el pago (si
-    // corresponde) — pero igual se abre WhatsApp con el detalle
+    // corresponde) — pero igual se manda WhatsApp con el detalle
     // completo, para que el cliente se quede con el comprobante.
-    window.open(url, '_blank');
-    mostrarConfirmacionPedido_(true, resultado.data);
+    mostrarConfirmacionPedido_(true, resultado.data, url, seAbrio);
     return;
   }
 
@@ -1951,32 +1973,42 @@ async function confirmarPedido_(){
     await new Promise(function(r){ setTimeout(r, 2200); });
   }
 
-  window.open(url, '_blank');
-  mostrarConfirmacionPedido_(false);
+  mostrarConfirmacionPedido_(false, null, url, seAbrio);
 }
 
-// [ACTUALIZADO — CHECKOUT ECOMMERCE] Ahora los dos caminos abren
-// WhatsApp con el detalle completo del pedido — la diferencia es solo
-// si además quedó registrado de verdad en el ERP (con stock reservado):
-//   pedidoConfirmadoEnERP=true  → quedó en el ERP Y se abrió WhatsApp
-//     como comprobante para el cliente.
-//   pedidoConfirmadoEnERP=false → fallback: solo quedó el WhatsApp
-//     (comportamiento anterior, sin cambios).
-function mostrarConfirmacionPedido_(pedidoConfirmadoEnERP, datosPedido){
+// [ACTUALIZADO — anti-bloqueo] Recibe la URL de WhatsApp y si se pudo
+// abrir sola (seAbrio). Los dos caminos (quedó o no en el ERP) mandan
+// WhatsApp con el detalle completo; la diferencia es solo si además
+// quedó registrado de verdad en el ERP (con stock reservado). Se
+// muestra SIEMPRE un botón "Abrir WhatsApp" — si ya se abrió sola, es
+// un respaldo por si el cliente cerró esa pestaña sin querer; si el
+// navegador la bloqueó, es la única forma de que el pedido no se
+// pierda, así que en ese caso queda destacado con un aviso.
+function mostrarConfirmacionPedido_(pedidoConfirmadoEnERP, datosPedido, urlWhatsapp, seAbrio){
   const icono = pedidoConfirmadoEnERP ? 'caja' : 'whatsapp';
 
   const mensajeExtra = pedidoConfirmadoEnERP
     ? '<p>Tu pedido quedó registrado'+(datosPedido && datosPedido.numero_np ? ' (Nota de Pedido '+escaparHTML(datosPedido.numero_np)+')' : '')+'. Te guardamos el stock por 30 minutos'+
       (metodoPagoElegido === 'transferencia' ? ' — mandanos el comprobante lo antes posible para que no se libere.' : '.')+
-      ' También se abrió WhatsApp con el detalle completo: guardalo como comprobante de tu pedido.</p>'
-    : '<p>Tu pedido se armó y se abrió WhatsApp para que lo confirmes con el comercio. Si adjuntaste un comprobante, recordá enviarlo también ahí.</p>';
+      '</p>'
+    : '<p>Tu pedido se armó para confirmarlo por WhatsApp con el comercio. Si adjuntaste un comprobante, recordá enviarlo también ahí.</p>';
+
+  const avisoBloqueo = (!seAbrio && urlWhatsapp)
+    ? '<p style="color:var(--rojo);font-weight:700">El navegador bloqueó la ventana de WhatsApp — tocá el botón de abajo para enviarlo, si no tu pedido no le va a llegar al comercio.</p>'
+    : '';
+
+  const botonWhatsapp = urlWhatsapp
+    ? '<a class="btn btn-primario" style="width:100%;margin-bottom:8px" href="'+escaparHTML(urlWhatsapp)+'" target="_blank" rel="noopener">'+iconoImg('whatsapp')+(seAbrio ? 'Reenviar por WhatsApp' : 'Abrir WhatsApp')+'</a>'
+    : '';
 
   document.getElementById('checkoutContenido').innerHTML =
     '<div class="checkout-confirmacion">'+
       '<div class="checkout-confirmacion-icono">'+iconoImg(icono)+'</div>'+
       '<h2 style="font-size:1.05rem">¡Listo!</h2>'+
       mensajeExtra+
-      '<button class="btn btn-primario" style="width:100%" onclick="finalizarCheckout_()">Cerrar</button>'+
+      avisoBloqueo+
+      botonWhatsapp+
+      '<button class="btn btn-fantasma" style="width:100%" onclick="finalizarCheckout_()">Cerrar</button>'+
     '</div>';
 }
 
