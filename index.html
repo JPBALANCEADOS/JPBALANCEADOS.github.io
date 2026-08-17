@@ -1907,10 +1907,34 @@ async function confirmarPedido_(){
 
   const resultado = await enviarPedidoAlERP_(payload);
 
+  // [ACTUALIZADO] El texto del pedido para WhatsApp se arma SIEMPRE, haya
+  // quedado o no registrado en el ERP. El comprador no tiene forma de
+  // consultar su pedido después (no hay portal/login) — el mensaje de
+  // WhatsApp es su único comprobante, y es indispensable que lo tenga
+  // sobre todo si ya pagó por transferencia.
+  const numeroNP = (resultado.success && resultado.data && resultado.data.numero_np) ? resultado.data.numero_np : '';
+  let texto = resultado.success
+    ? 'Hola! Quiero avisar que acabo de confirmar mi pedido'+(numeroNP ? ' (Nota de Pedido '+numeroNP+')' : '')+':\n\n'
+    : 'Hola! Quiero confirmar el siguiente pedido:\n\n';
+  texto += textoResumenPedido_();
+  texto += '\n\nNombre: '+nombre+'\nTeléfono: '+telefono;
+  texto += '\nDirección: '+direccionCalle+', '+localidad+' (CP '+codigoPostal+')';
+  if(notas) texto += '\nNotas: '+notas;
+  if(negocio.acepta_pagos){
+    texto += '\nMétodo de pago: '+(metodoPagoElegido === 'transferencia' ? 'Transferencia' : 'Efectivo / a coordinar');
+    if(metodoPagoElegido === 'transferencia' && comprobanteBase64){
+      texto += '\n(Te adjunto el comprobante de pago acá en el chat)';
+    }
+  }
+  const numero = String(negocio.whatsapp || '').replace(/[^\d]/g,'');
+  const url = (numero ? 'https://wa.me/'+numero : 'https://wa.me/') + '?text=' + encodeURIComponent(texto);
+
   if(resultado.success){
-    // Camino real: el pedido ya quedó creado en el ERP y con el stock
-    // reservado por 30 minutos, a la espera de que el comercio revise el
-    // pago (si corresponde).
+    // El pedido ya quedó creado en el ERP y con el stock reservado por
+    // 30 minutos, a la espera de que el comercio revise el pago (si
+    // corresponde) — pero igual se abre WhatsApp con el detalle
+    // completo, para que el cliente se quede con el comprobante.
+    window.open(url, '_blank');
     mostrarConfirmacionPedido_(true, resultado.data);
     return;
   }
@@ -1927,37 +1951,24 @@ async function confirmarPedido_(){
     await new Promise(function(r){ setTimeout(r, 2200); });
   }
 
-  let texto = 'Hola! Quiero confirmar el siguiente pedido:\n\n';
-  texto += textoResumenPedido_();
-  texto += '\n\nNombre: '+nombre+'\nTeléfono: '+telefono;
-  texto += '\nDirección: '+direccionCalle+', '+localidad+' (CP '+codigoPostal+')';
-  if(notas) texto += '\nNotas: '+notas;
-  if(negocio.acepta_pagos){
-    texto += '\nMétodo de pago: '+(metodoPagoElegido === 'transferencia' ? 'Transferencia' : 'Efectivo / a coordinar');
-    if(metodoPagoElegido === 'transferencia' && comprobanteBase64){
-      texto += '\n(Te adjunto el comprobante de pago acá en el chat)';
-    }
-  }
-
-  const numero = String(negocio.whatsapp || '').replace(/[^\d]/g,'');
-  const url = (numero ? 'https://wa.me/'+numero : 'https://wa.me/') + '?text=' + encodeURIComponent(texto);
   window.open(url, '_blank');
-
   mostrarConfirmacionPedido_(false);
 }
 
-// [ACTUALIZADO — CHECKOUT ECOMMERCE] Ahora distingue dos caminos:
-//   pedidoConfirmadoEnERP=true  → el pedido quedó registrado de verdad en
-//     el ERP, con stock reservado por 30 minutos. No hace falta WhatsApp.
-//   pedidoConfirmadoEnERP=false → fallback: se abrió WhatsApp (comporta-
-//     miento anterior, sin cambios).
+// [ACTUALIZADO — CHECKOUT ECOMMERCE] Ahora los dos caminos abren
+// WhatsApp con el detalle completo del pedido — la diferencia es solo
+// si además quedó registrado de verdad en el ERP (con stock reservado):
+//   pedidoConfirmadoEnERP=true  → quedó en el ERP Y se abrió WhatsApp
+//     como comprobante para el cliente.
+//   pedidoConfirmadoEnERP=false → fallback: solo quedó el WhatsApp
+//     (comportamiento anterior, sin cambios).
 function mostrarConfirmacionPedido_(pedidoConfirmadoEnERP, datosPedido){
   const icono = pedidoConfirmadoEnERP ? 'caja' : 'whatsapp';
 
   const mensajeExtra = pedidoConfirmadoEnERP
     ? '<p>Tu pedido quedó registrado'+(datosPedido && datosPedido.numero_np ? ' (Nota de Pedido '+escaparHTML(datosPedido.numero_np)+')' : '')+'. Te guardamos el stock por 30 minutos'+
       (metodoPagoElegido === 'transferencia' ? ' — mandanos el comprobante lo antes posible para que no se libere.' : '.')+
-      '</p>'
+      ' También se abrió WhatsApp con el detalle completo: guardalo como comprobante de tu pedido.</p>'
     : '<p>Tu pedido se armó y se abrió WhatsApp para que lo confirmes con el comercio. Si adjuntaste un comprobante, recordá enviarlo también ahí.</p>';
 
   document.getElementById('checkoutContenido').innerHTML =
