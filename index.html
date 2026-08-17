@@ -1708,6 +1708,17 @@ function abrirCheckout(){
     '<label class="checkout-label">Teléfono *</label>'+
     '<input id="ckTelefono" type="tel" class="checkout-input" placeholder="Tu WhatsApp o teléfono">'+
 
+    // [NUEVO — dirección de entrega] Sin "partido": es fricción real para
+    // un comprador que no lo sabe de memoria. Se resuelve después con una
+    // tabla de equivalencia CP→partido, del lado del ERP.
+    '<label class="checkout-label">Dirección de entrega (calle y número) *</label>'+
+    '<input id="ckDireccionCalle" type="text" class="checkout-input" placeholder="Ej: Av. Rivadavia 1234">'+
+
+    '<div style="display:flex;gap:8px;margin-top:12px">'+
+      '<div style="flex:1"><label class="checkout-label">Código postal *</label><input id="ckCP" type="text" class="checkout-input" placeholder="Ej: 1832"></div>'+
+      '<div style="flex:2"><label class="checkout-label">Localidad *</label><input id="ckLocalidad" type="text" class="checkout-input" placeholder="Ej: Lomas de Zamora"></div>'+
+    '</div>'+
+
     '<label class="checkout-label">Notas para el pedido (opcional)</label>'+
     '<textarea id="ckNotas" class="checkout-textarea" placeholder="Horario de entrega, aclaraciones, etc."></textarea>'+
 
@@ -1838,6 +1849,9 @@ async function confirmarPedido_(){
 
   const nombre = document.getElementById('ckNombre').value.trim();
   const telefono = document.getElementById('ckTelefono').value.trim();
+  const direccionCalle = document.getElementById('ckDireccionCalle').value.trim();
+  const codigoPostal = document.getElementById('ckCP').value.trim();
+  const localidad = document.getElementById('ckLocalidad').value.trim();
   const notas = document.getElementById('ckNotas').value.trim();
   const mensajeEl = document.getElementById('checkoutMensaje');
 
@@ -1846,11 +1860,17 @@ async function confirmarPedido_(){
     mensajeEl.textContent = 'Completá tu nombre y teléfono para confirmar.';
     return;
   }
+  if(!direccionCalle || !codigoPostal || !localidad){
+    mensajeEl.className = 'msg error';
+    mensajeEl.textContent = 'Completá la dirección de entrega, código postal y localidad para confirmar.';
+    return;
+  }
 
   const negocio = (CATALOGO && CATALOGO.negocio) || {};
   const payload = {
     fecha: new Date().toISOString(),
     cliente: { nombre: nombre, telefono: telefono, notas: notas },
+    direccion: { calle_numero: direccionCalle, codigo_postal: codigoPostal, localidad: localidad },
     items: Array.from(carrito.values()).map(function(entrada){
       return {
         producto_id: entrada.producto.producto_id,
@@ -1881,16 +1901,19 @@ async function confirmarPedido_(){
   // Fallback: el ERP no pudo confirmar el pedido (comercio no habilitado
   // para este canal, error de validación, sin conexión, etc.) — se sigue
   // confirmando por WhatsApp como hasta ahora, con todo el detalle del
-  // pedido armado (cliente, cantidades, método de pago elegido). Si el
-  // rechazo vino con un motivo puntual del servidor, se lo mostramos.
+  // pedido armado (cliente, cantidades, dirección, método de pago
+  // elegido). Si el rechazo vino con un motivo puntual del servidor, se
+  // lo mostramos.
   if(resultado.error && !resultado.fallback){
     mensajeEl.className = 'msg error';
     mensajeEl.textContent = resultado.error + ' — vamos a confirmar por WhatsApp.';
+    await new Promise(function(r){ setTimeout(r, 2200); });
   }
 
   let texto = 'Hola! Quiero confirmar el siguiente pedido:\n\n';
   texto += textoResumenPedido_();
   texto += '\n\nNombre: '+nombre+'\nTeléfono: '+telefono;
+  texto += '\nDirección: '+direccionCalle+', '+localidad+' (CP '+codigoPostal+')';
   if(notas) texto += '\nNotas: '+notas;
   if(negocio.acepta_pagos){
     texto += '\nMétodo de pago: '+(metodoPagoElegido === 'transferencia' ? 'Transferencia' : 'Efectivo / a coordinar');
