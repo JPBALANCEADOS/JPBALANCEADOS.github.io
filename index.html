@@ -2100,7 +2100,7 @@ function mostrarConfirmacionPedido_(pedidoConfirmadoEnERP, datosPedido, urlWhats
 
   let mensajeExtra;
   if(pedidoConfirmadoEnERP){
-    mensajeExtra = '<p>Tu pedido quedó registrado'+(datosPedido && datosPedido.numero_np ? ' (Nota de Pedido '+escaparHTML(datosPedido.numero_np)+')' : '')+'. Te guardamos el stock por 30 minutos'+
+    mensajeExtra = '<p>Tu pedido quedó registrado'+(datosPedido && datosPedido.numero_np ? ' (Nota de Pedido '+escaparHTML(datosPedido.numero_np)+')' : '')+'. En caso que no hayas pagado, te guardamos el stock por 30 minutos, caso contrario no podemos asegurar el stock.'+
       (metodoPagoElegido === 'transferencia' ? ' — mandanos el comprobante lo antes posible para que no se libere.' : '.')+
       '</p>';
     // [NUEVO — CORREO ARGENTINO] aviso de envío según cómo haya salido la cotización server-side
@@ -2114,7 +2114,7 @@ function mostrarConfirmacionPedido_(pedidoConfirmadoEnERP, datosPedido, urlWhats
   }
 
   const avisoBloqueo = (!seAbrio && urlWhatsapp)
-    ? '<p style="color:var(--rojo);font-weight:700">El navegador bloqueó la ventana de WhatsApp — tocá el botón de abajo para enviarlo, si no tu pedido no le va a llegar al comercio.</p>'
+    ? '<p style="color:var(--rojo);font-weight:700">El navegador bloqueó la ventana de WhatsApp — tocá el botón de abajo para enviarlo, asi podes darle seguimiento a tu pedido.</p>'
     : '';
 
   const botonWhatsapp = urlWhatsapp
