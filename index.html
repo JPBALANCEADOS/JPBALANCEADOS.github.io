@@ -324,10 +324,10 @@ header.marca{background:var(--marca);color:#fff;}
 .checkout-resumen-fila{display:flex;justify-content:space-between;gap:10px;font-size:.8rem;color:var(--carbon-60);padding:3px 0;}
 .checkout-resumen-total{margin-top:6px;padding-top:8px;border-top:1px solid var(--borde);font-weight:800;color:var(--carbon);font-size:.9rem;}
 .checkout-label{display:block;margin:12px 0 6px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:var(--carbon-60);}
-.checkout-input,.checkout-textarea,.checkout-file{width:100%;padding:0 12px;border:1.5px solid var(--borde);border-radius:var(--radio-sm);font-size:.88rem;background:#fff;}
-.checkout-input{height:42px;}
+.checkout-input,.checkout-textarea,.checkout-file,.checkout-select{width:100%;padding:0 12px;border:1.5px solid var(--borde);border-radius:var(--radio-sm);font-size:.88rem;background:#fff;}
+.checkout-input,.checkout-select{height:42px;}
 .checkout-textarea{min-height:64px;padding-top:10px;resize:vertical;}
-.checkout-input:focus,.checkout-textarea:focus{border-color:var(--marca);outline:none;}
+.checkout-input:focus,.checkout-textarea:focus,.checkout-select:focus{border-color:var(--marca);outline:none;}
 .checkout-file{height:auto;padding:8px 10px;font-size:.8rem;}
 .metodo-pago-opciones{display:flex;gap:8px;}
 .metodo-pago-opcion{flex:1;padding:10px 8px;border:1.5px solid var(--borde);border-radius:var(--radio-sm);background:#fff;font-size:.8rem;font-weight:700;color:var(--carbon-60);text-align:center;}
@@ -353,6 +353,10 @@ header.marca{background:var(--marca);color:#fff;}
 .msg.ok,.msg.error{display:block;}
 .msg.ok{color:var(--marca);}
 .msg.error{color:var(--rojo);}
+/* [NUEVO — CORREO ARGENTINO] Cotizador de envío dentro del checkout */
+.envio-otra-box{display:none;margin-top:10px;padding:12px;background:var(--hueso);border-radius:var(--radio-sm);}
+.envio-otra-box.visible{display:block;}
+.envio-resultado{margin-top:8px;font-size:.82rem;}
 
 /* ── Barra flotante de consulta (signature: no es un "carrito") ── */
 .barra-consulta{position:fixed;left:16px;right:16px;bottom:16px;z-index:60;max-width:640px;margin:0 auto;background:var(--marca-oscura);color:#fff;border-radius:20px;padding:10px 10px 10px 16px;display:none;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;box-shadow:var(--sombra-lg);transform:translateY(120%);transition:transform .25s cubic-bezier(.32,.72,0,1);}
@@ -463,6 +467,15 @@ let filtroSoloDestacados = false;
 let ordenActual = 'relevancia';
 let claveAlmacenamiento = '';
 let ultimoFocoAntesDeOverlay = null;
+
+// [NUEVO — CORREO ARGENTINO] Estado del cotizador de envío dentro del
+// checkout. zonaEntregaSeleccionada: '' (nada elegido) | nombre de una
+// zona propia | '__otra__' (activa el campo de CP + cotizador).
+// envioCotizado: null hasta que la cotización responde OK — el precio
+// que de verdad se cobra siempre se vuelve a calcular en el servidor al
+// confirmar (nunca se confía en esto para el cobro final).
+let zonaEntregaSeleccionada = '';
+let envioCotizado = null;
 
 // ── Set de íconos SVG en línea (currentColor → heredan el color del
 // texto/botón). Reemplazan los emojis: se ven iguales en cualquier
@@ -1682,7 +1695,7 @@ function enviarConsultaWhatsapp(productosForzados){
 }
 
 // ═══════════════════════════════════════════════════════════
-// CHECKOUT — datos del cliente, método de pago, comprobante.
+// CHECKOUT — datos del cliente, zona/envío, método de pago, comprobante.
 //
 // enviarPedidoAlERP_() ahora manda el pedido de verdad al ERP (doPost en
 // SISTEMA_doGet.gs → procesarCheckoutEcommerce_() en VENTA_Ecommerce.gs).
@@ -1699,6 +1712,12 @@ function enviarConsultaWhatsapp(productosForzados){
 // btnConfirmarPedido queda disabled mientras haya alguno (ver
 // renderListaContenido) — pero se vuelve a chequear acá también, por si
 // alguien reabre el checkout con el carrito ya abierto en otra pestaña.
+//
+// [NUEVO — CORREO ARGENTINO] El comprador ya no escribe la localidad
+// como texto libre: elige entre las zonas de reparto propio del
+// comercio (negocio.zonas_reparto_propio, nunca se cobra envío) o "Mi
+// localidad no está / ingresar código postal", que abre el cotizador de
+// Correo Argentino y suma ese costo al total.
 // ═══════════════════════════════════════════════════════════
 
 function abrirCheckout(){
@@ -1711,8 +1730,16 @@ function abrirCheckout(){
   metodoPagoElegido = 'efectivo';
   comprobanteBase64 = null;
   comprobanteMimeType = '';
+  // [NUEVO — CORREO ARGENTINO] reset del cotizador cada vez que se abre el checkout
+  zonaEntregaSeleccionada = '';
+  envioCotizado = null;
 
   const mostrarPagos = !!negocio.acepta_pagos;
+  const zonasPropias = Array.isArray(negocio.zonas_reparto_propio) ? negocio.zonas_reparto_propio : [];
+
+  const opcionesZona = zonasPropias.map(function(z){
+    return '<option value="'+escaparHTML(z)+'">'+escaparHTML(z)+'</option>';
+  }).join('') + '<option value="__otra__">Mi localidad no está / ingresar código postal</option>';
 
   document.getElementById('checkoutContenido').innerHTML =
     '<h2 style="font-size:1.05rem;margin-bottom:14px">Confirmar pedido</h2>'+
@@ -1725,15 +1752,22 @@ function abrirCheckout(){
     '<label class="checkout-label">Teléfono *</label>'+
     '<input id="ckTelefono" type="tel" class="checkout-input" placeholder="Tu WhatsApp o teléfono">'+
 
-    // [NUEVO — dirección de entrega] Sin "partido": es fricción real para
-    // un comprador que no lo sabe de memoria. Se resuelve después con una
-    // tabla de equivalencia CP→partido, del lado del ERP.
     '<label class="checkout-label">Dirección de entrega (calle y número) *</label>'+
     '<input id="ckDireccionCalle" type="text" class="checkout-input" placeholder="Ej: Av. Rivadavia 1234">'+
 
-    '<div style="display:flex;gap:8px;margin-top:12px">'+
-      '<div style="flex:1"><label class="checkout-label">Código postal *</label><input id="ckCP" type="text" class="checkout-input" placeholder="Ej: 1832"></div>'+
-      '<div style="flex:2"><label class="checkout-label">Localidad *</label><input id="ckLocalidad" type="text" class="checkout-input" placeholder="Ej: Lomas de Zamora"></div>'+
+    '<label class="checkout-label">Zona de entrega *</label>'+
+    '<select id="ckZonaEntrega" class="checkout-select">'+
+      '<option value="">Seleccioná tu localidad...</option>'+
+      opcionesZona+
+    '</select>'+
+
+    '<div id="ckOtraLocalidadBox" class="envio-otra-box">'+
+      '<label class="checkout-label" style="margin-top:0">Localidad *</label>'+
+      '<input id="ckLocalidadOtra" type="text" class="checkout-input" placeholder="Ej: Lomas de Zamora">'+
+      '<label class="checkout-label">Código postal *</label>'+
+      '<input id="ckCPOtra" type="text" class="checkout-input" placeholder="Ej: 1832">'+
+      '<button type="button" class="btn btn-fantasma" style="width:100%;margin-top:10px;height:40px" id="btnCotizarEnvio">Cotizar envío</button>'+
+      '<div id="cotizacionEnvioResultado" class="envio-resultado"></div>'+
     '</div>'+
 
     '<label class="checkout-label">Notas para el pedido (opcional)</label>'+
@@ -1750,6 +1784,16 @@ function abrirCheckout(){
 
     '<div id="checkoutMensaje" class="msg"></div>'+
     '<button class="btn btn-primario" style="width:100%;margin-top:14px" id="btnEnviarCheckout">Confirmar pedido</button>';
+
+  document.getElementById('ckZonaEntrega').addEventListener('change', function(){
+    zonaEntregaSeleccionada = this.value;
+    const esOtra = this.value === '__otra__';
+    document.getElementById('ckOtraLocalidadBox').classList.toggle('visible', esOtra);
+    envioCotizado = null;
+    document.getElementById('cotizacionEnvioResultado').innerHTML = '';
+    actualizarTotalConEnvio_();
+  });
+  document.getElementById('btnCotizarEnvio').addEventListener('click', cotizarEnvioCheckout_);
 
   if(mostrarPagos){
     document.querySelectorAll('.metodo-pago-opcion').forEach(function(btn){
@@ -1769,6 +1813,49 @@ function cerrarCheckout(){
   if(ultimoFocoAntesDeOverlay) ultimoFocoAntesDeOverlay.focus();
 }
 
+// [NUEVO — CORREO ARGENTINO] Cotizador en vivo — llama al doPost
+// accion:'cotizar_envio'. Nunca bloquea: si falla, se avisa que se
+// coordina por WhatsApp y el checkout sigue funcionando igual (el
+// servidor va a intentar cotizar de nuevo al confirmar, y si vuelve a
+// fallar, el pedido igual se crea, marcado "a coordinar").
+async function cotizarEnvioCheckout_(){
+  const cp = document.getElementById('ckCPOtra').value.trim();
+  const resultadoEl = document.getElementById('cotizacionEnvioResultado');
+  if(!cp){ resultadoEl.innerHTML = '<span style="color:var(--rojo)">Ingresá el código postal primero.</span>'; return; }
+  if(!API_BASE_URL){ resultadoEl.innerHTML = '<span style="color:var(--rojo)">No se pudo conectar — probá de nuevo en unos segundos.</span>'; return; }
+
+  resultadoEl.innerHTML = '<span style="color:var(--carbon-60)">Cotizando...</span>';
+  try{
+    const res = await fetch(API_BASE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        accion: 'cotizar_envio',
+        codigo_postal: cp,
+        items: Array.from(carrito.values()).map(function(e){ return { producto_id: e.producto.producto_id, cantidad: e.cantidad }; }),
+      }),
+    });
+    const data = await res.json();
+    if(!data.success){
+      envioCotizado = null;
+      resultadoEl.innerHTML = '<span style="color:var(--rojo)">'+escaparHTML(data.error || 'No se pudo cotizar. Lo coordinamos por WhatsApp.')+'</span>';
+    } else {
+      envioCotizado = data.data;
+      resultadoEl.innerHTML = '<span style="color:var(--marca);font-weight:700">Envío: $'+monto(envioCotizado.precio)+' — llega en '+envioCotizado.dias_min+' a '+envioCotizado.dias_max+' días</span>';
+    }
+  }catch(e){
+    envioCotizado = null;
+    resultadoEl.innerHTML = '<span style="color:var(--rojo)">No se pudo cotizar. Lo coordinamos por WhatsApp.</span>';
+  }
+  actualizarTotalConEnvio_();
+}
+
+// [NUEVO — CORREO ARGENTINO]
+function actualizarTotalConEnvio_(){
+  const cont = document.querySelector('#checkoutContenido .checkout-resumen');
+  if(cont) cont.innerHTML = textoResumenPedidoHTML_();
+}
+
 function textoResumenPedidoHTML_(){
   const negocio = (CATALOGO && CATALOGO.negocio) || {};
   const mostrarPrecio = negocio.mostrar_precios !== false;
@@ -1778,8 +1865,11 @@ function textoResumenPedidoHTML_(){
     return '<div class="checkout-resumen-fila"><span>'+entrada.cantidad+'x '+escaparHTML(formatearNombreProducto(p.nombre))+'</span>'+
       (mostrarPrecio ? '<span>$'+monto(precioEfectivo(p)*entrada.cantidad)+'</span>' : '')+'</div>';
   }).join('');
-  const total = mostrarPrecio ? '<div class="checkout-resumen-fila checkout-resumen-total"><span>Total</span><span>$'+monto(totalCarrito())+'</span></div>' : '';
-  return filas + total;
+  // [NUEVO — CORREO ARGENTINO] línea de envío, solo si ya se cotizó
+  const filaEnvio = (mostrarPrecio && envioCotizado) ? '<div class="checkout-resumen-fila"><span>Envío</span><span>$'+monto(envioCotizado.precio)+'</span></div>' : '';
+  const totalFinal = totalCarrito() + (envioCotizado ? envioCotizado.precio : 0);
+  const total = mostrarPrecio ? '<div class="checkout-resumen-fila checkout-resumen-total"><span>Total</span><span>$'+monto(totalFinal)+'</span></div>' : '';
+  return filas + filaEnvio + total;
 }
 
 function htmlDatosTransferencia_(negocio){
@@ -1832,12 +1922,6 @@ function manejarArchivoComprobante_(event){
   lector.readAsDataURL(archivo);
 }
 
-// [ACTUALIZADO — CHECKOUT ECOMMERCE] Ahora manda el pedido de verdad al
-// ERP. accion:'checkout_ecommerce' es lo que rutea el doPost del lado
-// del servidor. Si no hay API_BASE_URL todavía (no debería pasar, pero
-// por las dudas) o el fetch falla por lo que sea, se devuelve
-// {success:false, fallback:true} y confirmarPedido_() cae al mismo
-// camino de WhatsApp que ya existía.
 async function enviarPedidoAlERP_(payload){
   if(!API_BASE_URL){
     console.log('enviarPedidoAlERP_: no hay API_BASE_URL todavía — se usa el fallback de WhatsApp.');
@@ -1867,8 +1951,6 @@ async function confirmarPedido_(){
   const nombre = document.getElementById('ckNombre').value.trim();
   const telefono = document.getElementById('ckTelefono').value.trim();
   const direccionCalle = document.getElementById('ckDireccionCalle').value.trim();
-  const codigoPostal = document.getElementById('ckCP').value.trim();
-  const localidad = document.getElementById('ckLocalidad').value.trim();
   const notas = document.getElementById('ckNotas').value.trim();
   const mensajeEl = document.getElementById('checkoutMensaje');
 
@@ -1877,10 +1959,35 @@ async function confirmarPedido_(){
     mensajeEl.textContent = 'Completá tu nombre y teléfono para confirmar.';
     return;
   }
-  if(!direccionCalle || !codigoPostal || !localidad){
+  if(!direccionCalle){
     mensajeEl.className = 'msg error';
-    mensajeEl.textContent = 'Completá la dirección de entrega, código postal y localidad para confirmar.';
+    mensajeEl.textContent = 'Completá la dirección de entrega.';
     return;
+  }
+  if(!zonaEntregaSeleccionada){
+    mensajeEl.className = 'msg error';
+    mensajeEl.textContent = 'Seleccioná tu zona de entrega.';
+    return;
+  }
+
+  // [NUEVO — CORREO ARGENTINO] validación según zona propia u "otra"
+  const esZonaPropiaSel = zonaEntregaSeleccionada !== '__otra__';
+  let localidadFinal = zonaEntregaSeleccionada;
+  let cpFinal = '';
+
+  if(!esZonaPropiaSel){
+    localidadFinal = document.getElementById('ckLocalidadOtra').value.trim();
+    cpFinal = document.getElementById('ckCPOtra').value.trim();
+    if(!localidadFinal || !cpFinal){
+      mensajeEl.className = 'msg error';
+      mensajeEl.textContent = 'Completá localidad y código postal.';
+      return;
+    }
+    if(!envioCotizado){
+      mensajeEl.className = 'msg error';
+      mensajeEl.textContent = 'Cotizá el envío antes de confirmar.';
+      return;
+    }
   }
 
   // [ACTUALIZADO — anti-bloqueo de popups] Se abre la pestaña de
@@ -1900,7 +2007,8 @@ async function confirmarPedido_(){
   const payload = {
     fecha: new Date().toISOString(),
     cliente: { nombre: nombre, telefono: telefono, notas: notas },
-    direccion: { calle_numero: direccionCalle, codigo_postal: codigoPostal, localidad: localidad },
+    direccion: { calle_numero: direccionCalle, codigo_postal: cpFinal, localidad: localidadFinal },
+    entrega: { zona: esZonaPropiaSel ? zonaEntregaSeleccionada : '' },
     items: Array.from(carrito.values()).map(function(entrada){
       return {
         producto_id: entrada.producto.producto_id,
@@ -1931,7 +2039,8 @@ async function confirmarPedido_(){
     : 'Hola! Quiero confirmar el siguiente pedido:\n\n';
   texto += textoResumenPedido_();
   texto += '\n\nNombre: '+nombre+'\nTeléfono: '+telefono;
-  texto += '\nDirección: '+direccionCalle+', '+localidad+' (CP '+codigoPostal+')';
+  texto += '\nDirección: '+direccionCalle+', '+localidadFinal+(cpFinal ? ' (CP '+cpFinal+')' : '');
+  if(envioCotizado) texto += '\nEnvío estimado: $'+monto(envioCotizado.precio)+' ('+envioCotizado.dias_min+' a '+envioCotizado.dias_max+' días)';
   if(notas) texto += '\nNotas: '+notas;
   if(negocio.acepta_pagos){
     texto += '\nMétodo de pago: '+(metodoPagoElegido === 'transferencia' ? 'Transferencia' : 'Efectivo / a coordinar');
@@ -1976,22 +2085,33 @@ async function confirmarPedido_(){
   mostrarConfirmacionPedido_(false, null, url, seAbrio);
 }
 
-// [ACTUALIZADO — anti-bloqueo] Recibe la URL de WhatsApp y si se pudo
-// abrir sola (seAbrio). Los dos caminos (quedó o no en el ERP) mandan
-// WhatsApp con el detalle completo; la diferencia es solo si además
-// quedó registrado de verdad en el ERP (con stock reservado). Se
-// muestra SIEMPRE un botón "Abrir WhatsApp" — si ya se abrió sola, es
-// un respaldo por si el cliente cerró esa pestaña sin querer; si el
-// navegador la bloqueó, es la única forma de que el pedido no se
-// pierda, así que en ese caso queda destacado con un aviso.
+// [ACTUALIZADO — anti-bloqueo + CORREO ARGENTINO] Recibe la URL de
+// WhatsApp y si se pudo abrir sola (seAbrio). Los dos caminos (quedó o
+// no en el ERP) mandan WhatsApp con el detalle completo; la diferencia
+// es solo si además quedó registrado de verdad en el ERP (con stock
+// reservado). Se muestra SIEMPRE un botón "Abrir WhatsApp" — si ya se
+// abrió sola, es un respaldo por si el cliente cerró esa pestaña sin
+// querer; si el navegador la bloqueó, es la única forma de que el
+// pedido no se pierda, así que en ese caso queda destacado con un
+// aviso. Además, si el pedido quedó en el ERP, informa el estado del
+// envío según tipo_entrega.
 function mostrarConfirmacionPedido_(pedidoConfirmadoEnERP, datosPedido, urlWhatsapp, seAbrio){
   const icono = pedidoConfirmadoEnERP ? 'caja' : 'whatsapp';
 
-  const mensajeExtra = pedidoConfirmadoEnERP
-    ? '<p>Tu pedido quedó registrado'+(datosPedido && datosPedido.numero_np ? ' (Nota de Pedido '+escaparHTML(datosPedido.numero_np)+')' : '')+'. Te guardamos el stock por 30 minutos'+
+  let mensajeExtra;
+  if(pedidoConfirmadoEnERP){
+    mensajeExtra = '<p>Tu pedido quedó registrado'+(datosPedido && datosPedido.numero_np ? ' (Nota de Pedido '+escaparHTML(datosPedido.numero_np)+')' : '')+'. Te guardamos el stock por 30 minutos'+
       (metodoPagoElegido === 'transferencia' ? ' — mandanos el comprobante lo antes posible para que no se libere.' : '.')+
-      '</p>'
-    : '<p>Tu pedido se armó para confirmarlo por WhatsApp con el comercio. Si adjuntaste un comprobante, recordá enviarlo también ahí.</p>';
+      '</p>';
+    // [NUEVO — CORREO ARGENTINO] aviso de envío según cómo haya salido la cotización server-side
+    if(datosPedido && datosPedido.tipo_entrega === 'pendiente_decision' && datosPedido.costo_envio > 0){
+      mensajeExtra += '<p>Envío: $'+monto(datosPedido.costo_envio)+(datosPedido.dias_estimado_envio ? ' — estimado '+escaparHTML(datosPedido.dias_estimado_envio) : '')+'. Te vamos a avisar cómo se despacha.</p>';
+    } else if(datosPedido && datosPedido.tipo_entrega === 'a_coordinar'){
+      mensajeExtra += '<p>No pudimos cotizar el envío automáticamente — lo coordinamos por WhatsApp.</p>';
+    }
+  } else {
+    mensajeExtra = '<p>Tu pedido se armó para confirmarlo por WhatsApp con el comercio. Si adjuntaste un comprobante, recordá enviarlo también ahí.</p>';
+  }
 
   const avisoBloqueo = (!seAbrio && urlWhatsapp)
     ? '<p style="color:var(--rojo);font-weight:700">El navegador bloqueó la ventana de WhatsApp — tocá el botón de abajo para enviarlo, si no tu pedido no le va a llegar al comercio.</p>'
