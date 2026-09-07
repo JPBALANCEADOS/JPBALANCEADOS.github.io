@@ -389,6 +389,40 @@ let ultimoFocoAntesDeOverlay = null;
 let zonaEntregaSeleccionada = '';
 let envioCotizado = null;
 
+// [NUEVO — envío real por Correo Argentino] Códigos de provincia (1
+// letra) tal como los pide MiCorreo para /shipping/import. Se arma una
+// sola vez el HTML de <option> para no repetirlo en cada render del
+// checkout.
+const PROVINCIAS_AR = [
+  ['C', 'Ciudad Autónoma de Buenos Aires'],
+  ['B', 'Buenos Aires'],
+  ['S', 'Santa Fe'],
+  ['X', 'Córdoba'],
+  ['A', 'Salta'],
+  ['D', 'San Luis'],
+  ['E', 'Entre Ríos'],
+  ['F', 'La Rioja'],
+  ['G', 'Santiago del Estero'],
+  ['H', 'Chaco'],
+  ['J', 'San Juan'],
+  ['K', 'Catamarca'],
+  ['L', 'La Pampa'],
+  ['M', 'Mendoza'],
+  ['N', 'Misiones'],
+  ['P', 'Formosa'],
+  ['Q', 'Neuquén'],
+  ['R', 'Río Negro'],
+  ['T', 'Tucumán'],
+  ['U', 'Chubut'],
+  ['V', 'Tierra del Fuego'],
+  ['W', 'Corrientes'],
+  ['Y', 'Jujuy'],
+  ['Z', 'Santa Cruz'],
+];
+const OPCIONES_PROVINCIAS_HTML = PROVINCIAS_AR.map(function(p) {
+  return '<option value="' + p[0] + '">' + p[1] + '</option>';
+}).join('');
+
 const ICN = {
   buscar: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
   compartir: '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.5" x2="15.4" y2="6.5"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/></svg>',
@@ -1514,17 +1548,27 @@ function abrirCheckout(){
     return;
   }
   const negocio = (CATALOGO && CATALOGO.negocio) || {};
-  metodoPagoElegido = 'efectivo';
+  metodoPagoElegido = 'transferencia';
   comprobanteBase64 = null;
   comprobanteMimeType = '';
   zonaEntregaSeleccionada = '';
   envioCotizado = null;
 
   const mostrarPagos = !!negocio.acepta_pagos;
-  const zonasPropias = Array.isArray(negocio.zonas_reparto_propio) ? negocio.zonas_reparto_propio : [];
+  // [NUEVO — v5] zonas_reparto_propio ahora es {nombre, precio} — se
+  // acepta también el formato viejo (string suelto = siempre gratis)
+  // por si el negocio.json todavía no se volvió a publicar.
+  const zonasPropias = (Array.isArray(negocio.zonas_reparto_propio) ? negocio.zonas_reparto_propio : []).map(function(z){
+    return (typeof z === 'string') ? { nombre: z, precio: 0 } : { nombre: z.nombre || '', precio: Number(z.precio) || 0 };
+  }).filter(function(z){ return !!z.nombre; });
+  // Se guarda global (fuera de esta función) para poder consultarla
+  // cuando cambie el <select> más abajo, sin tener que recalcular.
+  window._zonasPropiasCheckout = zonasPropias;
 
+  const mostrarPrecioZonas = negocio.mostrar_precios !== false;
   const opcionesZona = zonasPropias.map(function(z){
-    return '<option value="'+escaparHTML(z)+'">'+escaparHTML(z)+'</option>';
+    const etiquetaPrecio = mostrarPrecioZonas ? (z.precio > 0 ? ' — $'+monto(z.precio) : ' — Gratis') : '';
+    return '<option value="'+escaparHTML(z.nombre)+'">'+escaparHTML(z.nombre)+etiquetaPrecio+'</option>';
   }).join('') + '<option value="__otra__">Mi localidad no está / ingresar código postal</option>';
 
   document.getElementById('checkoutContenido').innerHTML =
@@ -1538,6 +1582,9 @@ function abrirCheckout(){
     '<label class="checkout-label">Teléfono *</label>'+
     '<input id="ckTelefono" type="tel" class="checkout-input" placeholder="Tu WhatsApp o teléfono">'+
 
+    '<label class="checkout-label">Email *</label>'+
+    '<input id="ckEmail" type="email" class="checkout-input" placeholder="tu@email.com">'+
+
     '<label class="checkout-label">Dirección de entrega (calle y número) *</label>'+
     '<input id="ckDireccionCalle" type="text" class="checkout-input" placeholder="Ej: Av. Rivadavia 1234">'+
 
@@ -1550,6 +1597,11 @@ function abrirCheckout(){
     '<div id="ckOtraLocalidadBox" class="envio-otra-box">'+
       '<label class="checkout-label" style="margin-top:0">Localidad *</label>'+
       '<input id="ckLocalidadOtra" type="text" class="checkout-input" placeholder="Ej: Lomas de Zamora">'+
+      '<label class="checkout-label">Provincia *</label>'+
+      '<select id="ckProvinciaOtra" class="checkout-select">'+
+        '<option value="">Seleccioná tu provincia...</option>'+
+        OPCIONES_PROVINCIAS_HTML+
+      '</select>'+
       '<label class="checkout-label">Código postal *</label>'+
       '<input id="ckCPOtra" type="text" class="checkout-input" placeholder="Ej: 1832">'+
       '<button type="button" class="btn btn-fantasma" style="width:100%;margin-top:10px;height:40px" id="btnCotizarEnvio">Cotizar envío</button>'+
@@ -1562,10 +1614,10 @@ function abrirCheckout(){
     (mostrarPagos ?
       '<label class="checkout-label">Método de pago</label>'+
       '<div class="metodo-pago-opciones">'+
-        '<button type="button" class="metodo-pago-opcion activa" data-metodo="efectivo">Efectivo / a coordinar</button>'+
-        '<button type="button" class="metodo-pago-opcion" data-metodo="transferencia">Transferencia</button>'+
+        '<button type="button" class="metodo-pago-opcion" data-metodo="efectivo">Efectivo / a coordinar</button>'+
+        '<button type="button" class="metodo-pago-opcion activa" data-metodo="transferencia">Transferencia</button>'+
       '</div>'+
-      '<div id="datosTransferencia" class="datos-transferencia">'+htmlDatosTransferencia_(negocio)+'</div>'
+      '<div id="datosTransferencia" class="datos-transferencia visible">'+htmlDatosTransferencia_(negocio)+'</div>'
     : '')+
 
     '<div id="checkoutMensaje" class="msg"></div>'+
@@ -1575,8 +1627,20 @@ function abrirCheckout(){
     zonaEntregaSeleccionada = this.value;
     const esOtra = this.value === '__otra__';
     document.getElementById('ckOtraLocalidadBox').classList.toggle('visible', esOtra);
-    envioCotizado = null;
     document.getElementById('cotizacionEnvioResultado').innerHTML = '';
+
+    if(esOtra){
+      envioCotizado = null;
+    } else {
+      // [NUEVO — v5] Zona propia con precio — no hace falta cotizar
+      // contra ningún correo, el precio ya está en la config del
+      // negocio. Precio 0 = sin línea de envío (gratis), como antes.
+      const zonasPropias = window._zonasPropiasCheckout || [];
+      const zona = zonasPropias.find(function(z){ return z.nombre === zonaEntregaSeleccionada; });
+      envioCotizado = (zona && zona.precio > 0)
+        ? { precio: zona.precio, dias_min: null, dias_max: null, proveedor: 'zona_propia', zona_nombre: zona.nombre, proveedor_nombre: '' }
+        : null;
+    }
     actualizarTotalConEnvio_();
   });
   document.getElementById('btnCotizarEnvio').addEventListener('click', cotizarEnvioCheckout_);
@@ -1645,7 +1709,7 @@ function textoResumenPedidoHTML_(){
     return '<div class="checkout-resumen-fila"><span>'+entrada.cantidad+'x '+escaparHTML(formatearNombreProducto(p.nombre))+'</span>'+
       (mostrarPrecio ? '<span>$'+monto(precioEfectivo(p)*entrada.cantidad)+'</span>' : '')+'</div>';
   }).join('');
-  const filaEnvio = (mostrarPrecio && envioCotizado) ? '<div class="checkout-resumen-fila"><span>Envío'+(envioCotizado.proveedor_nombre ? ' ('+escaparHTML(envioCotizado.proveedor_nombre)+')' : '')+'</span><span>$'+monto(envioCotizado.precio)+'</span></div>' : '';
+  const filaEnvio = (mostrarPrecio && envioCotizado) ? '<div class="checkout-resumen-fila"><span>Envío'+((envioCotizado.zona_nombre || envioCotizado.proveedor_nombre) ? ' ('+escaparHTML(envioCotizado.zona_nombre || envioCotizado.proveedor_nombre)+')' : '')+'</span><span>$'+monto(envioCotizado.precio)+'</span></div>' : '';
   const totalFinal = totalCarrito() + (envioCotizado ? envioCotizado.precio : 0);
   const total = mostrarPrecio ? '<div class="checkout-resumen-fila checkout-resumen-total"><span>Total</span><span>$'+monto(totalFinal)+'</span></div>' : '';
   return filas + filaEnvio + total;
@@ -1729,6 +1793,7 @@ async function confirmarPedido_(){
 
   const nombre = document.getElementById('ckNombre').value.trim();
   const telefono = document.getElementById('ckTelefono').value.trim();
+  const email = document.getElementById('ckEmail').value.trim();
   const direccionCalle = document.getElementById('ckDireccionCalle').value.trim();
   const notas = document.getElementById('ckNotas').value.trim();
   const mensajeEl = document.getElementById('checkoutMensaje');
@@ -1736,6 +1801,13 @@ async function confirmarPedido_(){
   if(!nombre || !telefono){
     mensajeEl.className = 'msg error';
     mensajeEl.textContent = 'Completá tu nombre y teléfono para confirmar.';
+    return;
+  }
+  // Validación de formato simple (no verifica que exista de verdad) —
+  // Correo Argentino lo pide como campo obligatorio para crear el envío.
+  if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    mensajeEl.className = 'msg error';
+    mensajeEl.textContent = 'Completá un email válido.';
     return;
   }
   if(!direccionCalle){
@@ -1752,13 +1824,15 @@ async function confirmarPedido_(){
   const esZonaPropiaSel = zonaEntregaSeleccionada !== '__otra__';
   let localidadFinal = zonaEntregaSeleccionada;
   let cpFinal = '';
+  let provinciaFinal = '';
 
   if(!esZonaPropiaSel){
     localidadFinal = document.getElementById('ckLocalidadOtra').value.trim();
+    provinciaFinal = document.getElementById('ckProvinciaOtra').value;
     cpFinal = document.getElementById('ckCPOtra').value.trim();
-    if(!localidadFinal || !cpFinal){
+    if(!localidadFinal || !provinciaFinal || !cpFinal){
       mensajeEl.className = 'msg error';
-      mensajeEl.textContent = 'Completá localidad y código postal.';
+      mensajeEl.textContent = 'Completá localidad, provincia y código postal.';
       return;
     }
     if(!envioCotizado){
@@ -1773,8 +1847,8 @@ async function confirmarPedido_(){
   const negocio = (CATALOGO && CATALOGO.negocio) || {};
   const payload = {
     fecha: new Date().toISOString(),
-    cliente: { nombre: nombre, telefono: telefono, notas: notas },
-    direccion: { calle_numero: direccionCalle, codigo_postal: cpFinal, localidad: localidadFinal },
+    cliente: { nombre: nombre, telefono: telefono, email: email, notas: notas },
+    direccion: { calle_numero: direccionCalle, codigo_postal: cpFinal, localidad: localidadFinal, provincia: provinciaFinal },
     entrega: { zona: esZonaPropiaSel ? zonaEntregaSeleccionada : '' },
     items: Array.from(carrito.values()).map(function(entrada){
       return {
@@ -1802,7 +1876,15 @@ async function confirmarPedido_(){
   texto += textoResumenPedido_();
   texto += '\n\nNombre: '+nombre+'\nTeléfono: '+telefono;
   texto += '\nDirección: '+direccionCalle+', '+localidadFinal+(cpFinal ? ' (CP '+cpFinal+')' : '');
-  if(envioCotizado) texto += '\nEnvío estimado: $'+monto(envioCotizado.precio)+' ('+envioCotizado.dias_min+' a '+envioCotizado.dias_max+' días'+(envioCotizado.proveedor_nombre ? ' vía '+envioCotizado.proveedor_nombre : '')+')';
+  if(envioCotizado){
+    // [NUEVO — v5] Zona propia con precio no tiene rango de días (es
+    // el comercio entregando, no un correo con plazo estimado) — se
+    // omite esa parte del texto si dias_min viene null.
+    texto += '\nEnvío'+(envioCotizado.zona_nombre ? ' ('+envioCotizado.zona_nombre+')' : '')+': $'+monto(envioCotizado.precio);
+    if(envioCotizado.dias_min != null){
+      texto += ' — estimado '+envioCotizado.dias_min+' a '+envioCotizado.dias_max+' días'+(envioCotizado.proveedor_nombre ? ' vía '+envioCotizado.proveedor_nombre : '');
+    }
+  }
   if(notas) texto += '\nNotas: '+notas;
   if(negocio.acepta_pagos){
     texto += '\nMétodo de pago: '+(metodoPagoElegido === 'transferencia' ? 'Transferencia' : 'Efectivo / a coordinar');
